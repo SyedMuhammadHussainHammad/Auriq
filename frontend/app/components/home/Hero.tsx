@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Heart, ShoppingBag, ArrowRight } from "lucide-react";
+import PromotionalCards from "./PromotionalCards";
 
 // Mock data for advertisements (Admin manageable in future)
 const advertisements = [
@@ -49,10 +50,10 @@ const featuredPerfumes = [
 
 export default function Hero() {
   // Toggle this to test alternative mode
-  const showAds = true; 
+  const showAds = false; 
 
   return (
-    <section className="relative min-h-screen w-full flex flex-col justify-center overflow-hidden pt-20">
+    <section id="hero" className="relative min-h-screen w-full flex flex-col justify-center overflow-hidden pt-20">
       {/* Background Video with Overlay */}
       <div className="absolute inset-0 z-0">
         <video 
@@ -76,7 +77,7 @@ export default function Hero() {
         <h2 className="text-xl md:text-2xl font-serif text-gold italic mb-6">
           &quot;Essence In Motion&quot;
         </h2>
-        <p className="max-w-2xl text-white text-sm md:text-base leading-relaxed mb-10 drop-shadow-md">
+        <p className="max-w-2xl text-white/90 text-sm md:text-base leading-relaxed mb-10 drop-shadow-md">
           A premium fragrance experience crafted for those who appreciate elegance, sophistication, and timeless luxury.
         </p>
         
@@ -95,74 +96,9 @@ export default function Hero() {
           </Link>
         </div>
 
-        {/* Advertisement / Featured Showcase Overlay */}
-        <div className="w-full max-w-6xl mx-auto mt-auto">
-          {showAds && advertisements.length > 0 ? (
-            /* Ads Mode */
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-              {advertisements.slice(0, 2).map((ad, index) => (
-                <div 
-                  key={ad.id} 
-                  className={`lux-glass-card group p-2 ${index === 0 ? 'md:col-span-2 lg:col-span-1 lg:h-[280px]' : 'hidden lg:block lg:h-[280px]'}`}
-                >
-                  <div className="relative w-full h-full overflow-hidden rounded-lg">
-                    <Image
-                      src={ad.image}
-                      alt={ad.title}
-                      fill
-                      className="object-cover opacity-60 transition-all duration-[2000ms] group-hover:scale-105 group-hover:opacity-40"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none"></div>
-                    
-                    <div className="absolute inset-0 flex flex-col justify-end p-8 text-left z-10">
-                      <span className="text-gold text-[10px] font-bold tracking-[0.2em] uppercase mb-3 drop-shadow-sm">{ad.subtitle}</span>
-                      <h3 className="text-2xl md:text-3xl font-serif text-gradient-gold mb-4 font-bold tracking-wide drop-shadow-md">{ad.title}</h3>
-                      <Link 
-                        href={ad.url} 
-                        className="inline-flex items-center gap-4 text-xs text-white/80 font-bold tracking-[0.2em] hover:text-white transition-colors w-max group/link uppercase"
-                      >
-                        {ad.cta} <ArrowRight className="w-4 h-4 transition-transform duration-500 group-hover/link:translate-x-2" />
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            /* Fallback Mode: Featured Perfumes */
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              {featuredPerfumes.map((perfume) => (
-                <div 
-                  key={perfume.id} 
-                  className="lux-glass-card p-4 group"
-                >
-                  <div className="flex items-center gap-6 relative h-full w-full">
-                    <div className="relative w-24 h-24 rounded-sm overflow-hidden shrink-0 z-10 shadow-lg bg-background">
-                      <Image
-                        src={perfume.image}
-                        alt={perfume.name}
-                        fill
-                        className="object-cover opacity-90 transition-all duration-700 group-hover:scale-110 group-hover:opacity-100"
-                      />
-                    </div>
-                    <div className="flex flex-col text-left flex-1 z-10">
-                      <span className="text-gold text-[9px] font-bold tracking-[0.2em] uppercase mb-2">{perfume.brand}</span>
-                      <h4 className="font-serif text-gradient-gold text-sm mb-1 font-bold tracking-wide">{perfume.name}</h4>
-                      <span className="text-foreground/80 text-xs font-bold tracking-wider mb-3">{perfume.price}</span>
-                      <div className="flex items-center gap-4">
-                        <button className="text-foreground/60 hover:text-gold transition-colors" aria-label="Add to Wishlist">
-                          <Heart className="w-4 h-4" />
-                        </button>
-                        <button className="text-foreground/60 hover:text-gold transition-colors" aria-label="Add to Cart">
-                          <ShoppingBag className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+        {/* Promotional Cards Overlay */}
+        <div className="w-full max-w-7xl mx-auto mt-auto pb-4 md:pb-8">
+          <PromotionalCards className="w-full relative z-10" showNoise={false} />
         </div>
       </div>
     </section>

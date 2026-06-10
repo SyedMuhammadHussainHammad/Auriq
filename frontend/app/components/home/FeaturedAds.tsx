@@ -37,9 +37,15 @@ const ads = [
 
 export default function FeaturedAds() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isVisible, setIsVisible] = useState(true);
 
   // Auto-advance the carousel every 5 seconds
   useEffect(() => {
+    const saved = localStorage.getItem("auriq_show_carousel");
+    if (saved !== null) {
+      setIsVisible(saved === "true");
+    }
+
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev === ads.length - 1 ? 0 : prev + 1));
     }, 5000);
@@ -53,6 +59,8 @@ export default function FeaturedAds() {
   const prevSlide = () => {
     setCurrentSlide((prev) => (prev === 0 ? ads.length - 1 : prev - 1));
   };
+
+  if (!isVisible) return null;
 
   return (
     <section className="w-full relative overflow-hidden bg-background group">

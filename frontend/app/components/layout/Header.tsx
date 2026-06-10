@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { Search, Heart, ShoppingCart, User } from "lucide-react";
@@ -5,13 +7,23 @@ import AnnouncementBar from "./AnnouncementBar";
 import ThemeToggle from "./ThemeToggle";
 
 export default function Header() {
+  const handleLogoClick = (e: React.MouseEvent) => {
+    if (window.location.pathname === '/') {
+      e.preventDefault();
+      const hero = document.getElementById('hero');
+      if (hero) {
+        hero.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md border-b border-foreground/10 transition-all duration-300">
       <AnnouncementBar />
       <div className="container-lux flex items-center justify-between h-20">
         {/* Left: Logo */}
         <div className="flex items-center gap-2">
-          <Link href="/" className="flex items-center gap-3">
+          <Link href="/#hero" onClick={handleLogoClick} className="flex items-center gap-3">
             <Image src="/icon.svg" alt="Auriq Logo" width={40} height={40} className="w-10 h-10 object-cover rounded-full bg-black/20" priority />
             <span className="text-2xl font-serif tracking-widest font-bold hidden sm:block">AURIQ</span>
           </Link>

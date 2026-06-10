@@ -8,7 +8,6 @@ import OurStory from "./components/home/OurStory";
 import WhyChooseAuriq from "./components/home/WhyChooseAuriq";
 import ContactFeedback from "./components/home/ContactFeedback";
 
-import PromotionalCards from "./components/home/PromotionalCards";
 
 export default function Home() {
   return (
@@ -18,7 +17,6 @@ export default function Home() {
       <main className="flex-1 w-full">
         <FeaturedAds />
         <Hero />
-        <PromotionalCards />
         <FeaturedCollection />
         <BestSellers />
         <OurStory />

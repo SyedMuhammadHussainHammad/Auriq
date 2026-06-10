@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Edit, Trash2, Store, CheckCircle, Clock, Image as ImageIcon, LayoutTemplate, Star, LayoutGrid, Save } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, Edit, Trash2, Store, CheckCircle, Clock, Image as ImageIcon, LayoutTemplate, Star, LayoutGrid, Save, Eye, EyeOff } from "lucide-react";
 import Image from "next/image";
 import Modal from "../../components/ui/Modal";
 
@@ -11,9 +11,18 @@ export default function AdminStorefront() {
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [showCarousel, setShowCarousel] = useState(true);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("auriq_show_carousel");
+    if (saved !== null) {
+      setShowCarousel(saved === "true");
+    }
+  }, []);
 
   const handlePublish = () => {
     setIsSaving(true);
+    localStorage.setItem("auriq_show_carousel", showCarousel.toString());
     setTimeout(() => {
       setIsSaving(false);
       setSaveSuccess(true);
@@ -100,7 +109,15 @@ export default function AdminStorefront() {
           {activeTab === 'carousel' && (
             <div className="flex flex-col gap-6">
               <div className="flex justify-between items-center mb-2">
-                <h2 className="text-xl font-serif font-bold text-foreground">Hero Carousel</h2>
+                <div className="flex items-center gap-4">
+                  <h2 className="text-xl font-serif font-bold text-foreground">Hero Carousel</h2>
+                  <button 
+                    onClick={() => setShowCarousel(!showCarousel)}
+                    className={`text-[10px] px-2 py-1 rounded-md font-sans font-bold tracking-widest uppercase flex items-center gap-1.5 transition-colors ${showCarousel ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20' : 'bg-red-500/10 text-red-500 hover:bg-red-500/20'}`}
+                  >
+                    {showCarousel ? <><Eye className="w-3 h-3"/> Visible on Store</> : <><EyeOff className="w-3 h-3"/> Hidden on Store</>}
+                  </button>
+                </div>
                 <button 
                   onClick={() => setIsSlideModalOpen(true)}
                   className="text-gold text-xs font-bold tracking-widest uppercase hover:underline flex items-center gap-1"
