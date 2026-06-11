@@ -1,137 +1,127 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Trash2, ShoppingBag, ArrowLeft } from "lucide-react";
+import { Trash2, ShoppingBag } from "lucide-react";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
-
-const mockWishlistItems = [
-  {
-    id: 2,
-    name: "Velvet Rose",
-    brand: "Auriq",
-    price: "Rs. 9,800",
-    image: "https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?q=80&w=2787&auto=format&fit=crop",
-  },
-  {
-    id: 5,
-    name: "Oud Wood",
-    brand: "Auriq",
-    price: "Rs. 16,500",
-    image: "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=2787&auto=format&fit=crop",
-  },
-  {
-    id: 7,
-    name: "Lost Cherry",
-    brand: "Auriq",
-    price: "Rs. 19,000",
-    image: "https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=2796&auto=format&fit=crop",
-  }
-];
+import { apiFetch } from "../utils/api";
 
 export default function WishlistPage() {
-  const [wishlistItems, setWishlistItems] = useState(mockWishlistItems);
+  const [wishlistItems, setWishlistItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const removeItem = (id: number) => {
-    setWishlistItems(items => items.filter(item => item.id !== id));
+  const fetchWishlist = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('auriqAccessToken');
+      if (!token) {
+        setError("Please sign in to view your wishlist.");
+        setLoading(false);
+        return;
+      }
+      
+      const res = await apiFetch('/wishlist', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (res.success && res.data) {
+        setWishlistItems(res.data.items || []);
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load wishlist.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchWishlist();
+  }, []);
+
+  const handleRemove = async (productId: number) => {
+    try {
+      const token = localStorage.getItem('auriqAccessToken');
+      if (!token) return;
+
+      const res = await apiFetch(`/wishlist/remove/${productId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.success) {
+        fetchWishlist();
+      }
+    } catch (err) {
+      alert("Failed to remove item from wishlist.");
+    }
   };
 
   return (
     <>
       <Header />
-      <main className="flex-1 w-full bg-perfume-main min-h-screen relative overflow-hidden pb-24">
-        {/* Noise overlay */}
+      <main className="flex-1 w-full bg-perfume-main min-h-screen relative overflow-hidden pt-24 pb-24">
         <div className="absolute inset-0 bg-noise opacity-30 pointer-events-none z-0"></div>
-
-        <div className="relative z-10 container-lux pt-12">
-          
-          {/* Header */}
-          <div className="mb-12 border-b border-foreground/10 pb-6 flex items-center justify-between">
-            <h1 className="text-3xl md:text-5xl font-serif text-foreground font-bold tracking-widest">Your Wishlist</h1>
-            <span className="hidden md:block text-foreground/50 text-xs font-bold tracking-[0.2em] uppercase">
-              {wishlistItems.length} {wishlistItems.length === 1 ? 'Item' : 'Items'} Saved
-            </span>
+        
+        <div className="container-lux relative z-10">
+          <div className="text-center mb-16">
+            <span className="text-gold text-xs font-bold tracking-[0.3em] uppercase mb-4 block">Your Collection</span>
+            <h1 className="text-4xl md:text-5xl font-serif text-foreground font-bold tracking-widest mb-6">Wishlist</h1>
           </div>
 
-          {wishlistItems.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 text-center lux-glass-card rounded-2xl">
-              <h2 className="text-2xl font-serif text-foreground mb-4">Your wishlist is empty.</h2>
-              <p className="text-foreground/60 mb-8 max-w-md">
-                Save your favorite fragrances here and easily move them to your cart when you are ready to purchase.
-              </p>
-              <Link href="/collections" className="bg-gold text-background px-8 py-4 text-xs font-bold tracking-[0.2em] uppercase hover:bg-foreground transition-colors">
-                Discover Fragrances
+          {loading ? (
+            <div className="flex justify-center items-center h-64 text-gold">Loading...</div>
+          ) : error ? (
+            <div className="text-center text-red-400 p-8 border border-red-500/20 bg-red-500/5">{error}</div>
+          ) : wishlistItems.length === 0 ? (
+            <div className="text-center p-16 lux-glass-card">
+              <p className="text-foreground/60 mb-6">Your wishlist is currently empty.</p>
+              <Link href="/products" className="bg-gold text-background px-8 py-3 text-xs font-bold tracking-[0.2em] uppercase hover:bg-foreground transition-colors inline-block">
+                Explore Fragrances
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
-              {wishlistItems.map((item) => (
-                <div key={item.id} className="group relative flex flex-col lux-glass-card p-5">
-                  <div className="flex flex-col h-full">
-                    
-                    {/* Image Container */}
-                    <div className="relative aspect-[4/5] overflow-hidden rounded-xl mb-6 bg-background z-10 shadow-2xl">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {wishlistItems.map((item) => {
+                const product = item.product;
+                const imageUrl = product.images?.[0]?.image_url || "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=2787&auto=format&fit=crop";
+                const price = product.variants?.[0]?.price || "N/A";
+                
+                return (
+                  <div key={item.id} className="group cursor-pointer">
+                    <div className="relative aspect-[4/5] overflow-hidden mb-6 bg-foreground/5 lux-glass-card">
                       <Image
-                        src={item.image}
-                        alt={item.name}
+                        src={imageUrl}
+                        alt={product.name}
                         fill
-                        className="object-cover opacity-90 transition-all duration-700 group-hover:scale-110 group-hover:opacity-100"
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
                       />
-                      
-                      {/* Remove Overlay */}
-                      <div className="absolute top-4 right-4 z-10">
-                        <button 
-                          onClick={(e) => {
-                            e.preventDefault();
-                            removeItem(item.id);
-                          }} 
-                          className="bg-background/60 backdrop-blur-md border border-foreground/20 text-foreground/80 p-2.5 rounded-full hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/50 transition-all shadow-lg" 
-                          aria-label="Remove from Wishlist"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                      
-                      {/* Move to Cart Overlay */}
-                      <div className="absolute bottom-0 left-0 w-full opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 z-10">
-                        <button 
-                          onClick={(e) => {
-                            e.preventDefault();
-                            // Implementation for moving to cart will go here
-                          }} 
-                          className="w-full bg-foreground/95 backdrop-blur-md text-background py-4 text-xs font-bold tracking-[0.2em] uppercase hover:bg-gold transition-colors flex items-center justify-center gap-2 border-t border-foreground/20 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]"
-                        >
-                          <ShoppingBag className="w-4 h-4" />
-                          Move to Cart
-                        </button>
-                      </div>
+                      <button 
+                        onClick={(e) => { e.preventDefault(); handleRemove(product.id); }}
+                        className="absolute top-4 right-4 w-10 h-10 rounded-full bg-background/50 backdrop-blur-md flex items-center justify-center text-foreground hover:bg-red-500 hover:text-white transition-all opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
-
-                    {/* Product Info */}
-                    <div className="flex flex-col text-center relative z-10 px-2">
-                      <span className="text-[10px] text-gold uppercase tracking-[0.2em] mb-3 font-bold">{item.brand}</span>
-                      <Link href={`/products/${item.id}`}>
-                        <h3 className="font-serif text-xl text-foreground mb-2 font-bold drop-shadow-md hover:text-gold transition-colors">{item.name}</h3>
-                      </Link>
-                      <span className="text-foreground/80 text-sm tracking-wide font-medium">{item.price}</span>
+                    
+                    <div className="flex flex-col items-center text-center">
+                      <span className="text-gold text-[10px] font-bold tracking-[0.3em] uppercase mb-2">Auriq Exclusives</span>
+                      <h3 className="text-xl font-serif text-foreground font-bold tracking-widest mb-2">{product.name}</h3>
+                      <p className="text-sm text-foreground/70 tracking-widest font-light mb-4">Rs. {price}</p>
+                      
+                      <button className="w-full flex items-center justify-center gap-2 border border-foreground/20 text-foreground py-3 text-xs font-bold tracking-[0.2em] uppercase hover:bg-foreground hover:text-background transition-colors">
+                        <ShoppingBag className="w-4 h-4" />
+                        Add to Cart
+                      </button>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
-          
-          {wishlistItems.length > 0 && (
-            <div className="mt-16 flex justify-center">
-              <Link href="/collections" className="flex items-center gap-2 text-foreground/50 hover:text-gold transition-colors text-xs font-bold tracking-[0.2em] uppercase">
-                <ArrowLeft className="w-4 h-4" />
-                Continue Shopping
-              </Link>
-            </div>
-          )}
-
         </div>
       </main>
       <Footer />

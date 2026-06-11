@@ -34,18 +34,54 @@ function AccountContent() {
 
   // User State
   const [user, setUser] = useState<any>(null);
+  const [addresses, setAddresses] = useState<any[]>([]);
+  const [profileName, setProfileName] = useState("");
+  const [profilePhone, setProfilePhone] = useState("");
+  
+  // Password State
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  // Address Form State
+  const [addrLabel, setAddrLabel] = useState("Home");
+  const [addrFullName, setAddrFullName] = useState("");
+  const [addrPhone, setAddrPhone] = useState("");
+  const [addrStreet, setAddrStreet] = useState("");
+  const [addrCity, setAddrCity] = useState("");
+  const [addrProvince, setAddrProvince] = useState("");
+  const [addrPostal, setAddrPostal] = useState("");
+  const [addrDefault, setAddrDefault] = useState(false);
+
+  const fetchUserData = async (token: string) => {
+    try {
+      const profileRes = await apiFetch('/user/profile', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (profileRes.success) {
+        setUser(profileRes.data);
+        setProfileName(profileRes.data.name);
+        setProfilePhone(profileRes.data.phone || "");
+        localStorage.setItem('auriqUser', JSON.stringify(profileRes.data));
+      }
+
+      const addressRes = await apiFetch('/user/addresses', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (addressRes.success) {
+        setAddresses(addressRes.data);
+      }
+    } catch (e) {
+      console.error("Failed to fetch user data");
+    }
+  };
 
   useEffect(() => {
     const checkLoginState = () => {
       const token = localStorage.getItem('auriqAccessToken');
-      const storedUser = localStorage.getItem('auriqUser');
-      if (token && storedUser) {
+      if (token) {
         setIsLoggedIn(true);
-        try {
-          setUser(JSON.parse(storedUser));
-        } catch (e) {
-          console.error("Failed to parse user");
-        }
+        fetchUserData(token);
       } else {
         setIsLoggedIn(false);
         setUser(null);
@@ -75,7 +111,6 @@ function AccountContent() {
       if (response.success) {
         localStorage.setItem('auriqAccessToken', response.data.accessToken);
         localStorage.setItem('auriqRefreshToken', response.data.refreshToken);
-        localStorage.setItem('auriqUser', JSON.stringify(response.data.user));
         window.dispatchEvent(new Event('loginStateChange'));
       }
     } catch (err: any) {
@@ -100,7 +135,6 @@ function AccountContent() {
       if (response.success) {
         localStorage.setItem('auriqAccessToken', response.data.accessToken);
         localStorage.setItem('auriqRefreshToken', response.data.refreshToken);
-        localStorage.setItem('auriqUser', JSON.stringify(response.data.user));
         window.dispatchEvent(new Event('loginStateChange'));
       }
     } catch (err: any) {
@@ -130,6 +164,92 @@ function AccountContent() {
     }
   };
 
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('auriqAccessToken');
+      const res = await apiFetch('/user/profile', {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ name: profileName, phone: profilePhone })
+      });
+      if (res.success) {
+        alert("Profile updated successfully!");
+        fetchUserData(token!);
+      }
+    } catch (err: any) {
+      alert(err.message || 'Failed to update profile');
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    if (newPassword !== confirmPassword) {
+      alert("New passwords do not match!");
+      return;
+    }
+    try {
+      const token = localStorage.getItem('auriqAccessToken');
+      const res = await apiFetch('/user/password', {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ currentPassword: oldPassword, newPassword })
+      });
+      if (res.success) {
+        alert("Password updated successfully!");
+        setIsChangingPassword(false);
+        setOldPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+      }
+    } catch (err: any) {
+      alert(err.message || 'Failed to update password');
+    }
+  };
+
+  const handleAddAddress = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('auriqAccessToken');
+      const res = await apiFetch('/user/addresses', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          label: addrLabel,
+          full_name: addrFullName,
+          phone: addrPhone,
+          street: addrStreet,
+          city: addrCity,
+          province: addrProvince,
+          postal_code: addrPostal,
+          is_default: addrDefault
+        })
+      });
+      if (res.success) {
+        alert("Address saved successfully!");
+        setIsAddingAddress(false);
+        fetchUserData(token!);
+      }
+    } catch (err: any) {
+      alert(err.message || 'Failed to add address');
+    }
+  };
+
+  const handleDeleteAddress = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this address?")) return;
+    try {
+      const token = localStorage.getItem('auriqAccessToken');
+      const res = await apiFetch(`/user/addresses/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.success) {
+        fetchUserData(token!);
+      }
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete address');
+    }
+  };
+
   const handleSocialLogin = async (provider: 'google' | 'facebook', token: string) => {
     try {
       setLoginLoading(true);
@@ -144,7 +264,6 @@ function AccountContent() {
       
       localStorage.setItem('auriqAccessToken', data.data.accessToken);
       localStorage.setItem('auriqRefreshToken', data.data.refreshToken);
-      localStorage.setItem('auriqUser', JSON.stringify(data.data.user));
       window.dispatchEvent(new Event('loginStateChange'));
     } catch (err: any) {
       setLoginError(err.message || `${provider} login failed`);
@@ -414,16 +533,6 @@ function AccountContent() {
                       <Link href="/orders" className="text-gold hover:underline text-xs tracking-widest uppercase font-bold">View Details</Link>
                     </div>
                   </div>
-                  <div className="flex flex-col md:flex-row md:items-center justify-between p-6 border border-foreground/10 hover:border-gold/30 transition-colors gap-4 bg-foreground/[0.02]">
-                    <div>
-                      <p className="text-sm font-bold tracking-wide text-foreground mb-1">#AQ-7410</p>
-                      <p className="text-xs text-foreground/60 font-medium">Placed on Aug 05, 2025</p>
-                    </div>
-                    <div className="flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6">
-                      <span className="px-3 py-1 bg-gold/10 text-gold rounded text-[10px] font-bold uppercase tracking-widest border border-gold/20">Processing</span>
-                      <Link href="/orders" className="text-gold hover:underline text-xs tracking-widest uppercase font-bold">View Details</Link>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
@@ -432,65 +541,66 @@ function AccountContent() {
           {activeTab === 'profile' && (
             <div className="flex flex-col gap-6 relative z-10 max-w-xl">
               <h2 className="text-2xl font-serif text-foreground mb-6 font-bold">Profile Details</h2>
-              <form className="flex flex-col gap-6" onSubmit={(e) => { e.preventDefault(); alert('Profile details updated successfully!'); }}>
+              <form className="flex flex-col gap-6" onSubmit={handleUpdateProfile}>
                 
                 {/* Personal Info */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="flex flex-col gap-3 group">
-                    <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">First Name</label>
-                    <input type="text" defaultValue={user?.name?.split(' ')[0] || ""} className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" />
+                    <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">Full Name</label>
+                    <input type="text" value={profileName} onChange={(e) => setProfileName(e.target.value)} className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" required />
                   </div>
                   <div className="flex flex-col gap-3 group">
-                    <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">Last Name</label>
-                    <input type="text" defaultValue={user?.name?.split(' ').slice(1).join(' ') || ""} className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" />
+                    <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">Email Address</label>
+                    <input type="email" value={user?.email || ""} className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" disabled />
                   </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="flex flex-col gap-3 group">
-                    <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">Email Address</label>
-                    <input type="email" defaultValue={user?.email || ""} className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" disabled />
-                  </div>
-                  <div className="flex flex-col gap-3 group">
                     <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">Phone Number</label>
-                    <input type="tel" defaultValue={user?.phone || ""} className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" />
+                    <input type="tel" value={profilePhone} onChange={(e) => setProfilePhone(e.target.value)} className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" />
                   </div>
-                </div>
-
-                {/* Password Change */}
-                <div className="mt-8 mb-4 border-t border-foreground/10 pt-8">
-                  <h3 className="text-sm font-bold tracking-widest uppercase text-foreground mb-6">Change Password</h3>
-                  {!isChangingPassword ? (
-                    <button type="button" onClick={() => setIsChangingPassword(true)} className="border border-foreground/20 text-foreground px-6 py-2 text-xs font-bold tracking-[0.2em] uppercase hover:bg-foreground/5 transition-colors">
-                      Update Password
-                    </button>
-                  ) : (
-                    <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
-                      <div className="flex flex-col gap-3 group">
-                        <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">Old Password</label>
-                        <input type="password" placeholder="Enter current password" minLength={8} className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" required />
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="flex flex-col gap-3 group">
-                          <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">New Password</label>
-                          <input type="password" placeholder="Enter new password" minLength={8} className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" required />
-                        </div>
-                        <div className="flex flex-col gap-3 group">
-                          <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">Confirm New Password</label>
-                          <input type="password" placeholder="Retype new password" minLength={8} className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" required />
-                        </div>
-                      </div>
-                      <button type="button" onClick={() => setIsChangingPassword(false)} className="w-fit text-foreground/50 hover:text-red-400 px-0 py-2 text-xs font-bold tracking-[0.2em] uppercase transition-colors">
-                        Cancel Password Change
-                      </button>
-                    </div>
-                  )}
                 </div>
 
                 <button type="submit" className="w-fit bg-gold text-background px-8 py-3 mt-4 text-xs font-bold tracking-[0.2em] uppercase hover:bg-foreground transition-colors">
                   Save Changes
                 </button>
               </form>
+
+              {/* Password Change */}
+              <div className="mt-8 mb-4 border-t border-foreground/10 pt-8">
+                <h3 className="text-sm font-bold tracking-widest uppercase text-foreground mb-6">Change Password</h3>
+                {!isChangingPassword ? (
+                  <button type="button" onClick={() => setIsChangingPassword(true)} className="border border-foreground/20 text-foreground px-6 py-2 text-xs font-bold tracking-[0.2em] uppercase hover:bg-foreground/5 transition-colors">
+                    Update Password
+                  </button>
+                ) : (
+                  <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="flex flex-col gap-3 group">
+                      <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">Old Password</label>
+                      <input type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} placeholder="Enter current password" minLength={8} className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" required />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="flex flex-col gap-3 group">
+                        <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">New Password</label>
+                        <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Enter new password" minLength={8} className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" required />
+                      </div>
+                      <div className="flex flex-col gap-3 group">
+                        <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">Confirm New Password</label>
+                        <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Retype new password" minLength={8} className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" required />
+                      </div>
+                    </div>
+                    <div className="flex gap-4">
+                      <button type="button" onClick={handleUpdatePassword} className="w-fit bg-gold text-background px-6 py-2 text-xs font-bold tracking-[0.2em] uppercase hover:bg-foreground transition-colors">
+                        Save Password
+                      </button>
+                      <button type="button" onClick={() => setIsChangingPassword(false)} className="w-fit text-foreground/50 hover:text-red-400 px-0 py-2 text-xs font-bold tracking-[0.2em] uppercase transition-colors">
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -504,39 +614,74 @@ function AccountContent() {
               </div>
               
               {isAddingAddress ? (
-                <form className="flex flex-col gap-6 bg-foreground/[0.02] border border-foreground/10 p-6" onSubmit={(e) => { e.preventDefault(); setIsAddingAddress(false); alert("Address saved successfully!"); }}>
+                <form className="flex flex-col gap-6 bg-foreground/[0.02] border border-foreground/10 p-6" onSubmit={handleAddAddress}>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="flex flex-col gap-3 group">
+                      <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">Label (e.g. Home, Office)</label>
+                      <input type="text" value={addrLabel} onChange={e => setAddrLabel(e.target.value)} className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" required />
+                    </div>
+                    <div className="flex flex-col gap-3 group">
+                      <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">Full Name</label>
+                      <input type="text" value={addrFullName} onChange={e => setAddrFullName(e.target.value)} className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" required />
+                    </div>
+                  </div>
                   <div className="flex flex-col gap-3 group">
                     <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">Street Address</label>
-                    <input type="text" className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" required />
+                    <input type="text" value={addrStreet} onChange={e => setAddrStreet(e.target.value)} className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" required />
                   </div>
                   <div className="grid grid-cols-2 gap-6">
                     <div className="flex flex-col gap-3 group">
                       <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">City</label>
-                      <input type="text" className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" required />
+                      <input type="text" value={addrCity} onChange={e => setAddrCity(e.target.value)} className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" required />
                     </div>
                     <div className="flex flex-col gap-3 group">
-                      <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">Zip Code</label>
-                      <input type="text" className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" required />
+                      <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">Province</label>
+                      <input type="text" value={addrProvince} onChange={e => setAddrProvince(e.target.value)} className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" required />
                     </div>
                   </div>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="flex flex-col gap-3 group">
+                      <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">Postal Code</label>
+                      <input type="text" value={addrPostal} onChange={e => setAddrPostal(e.target.value)} className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" />
+                    </div>
+                    <div className="flex flex-col gap-3 group">
+                      <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">Phone</label>
+                      <input type="tel" value={addrPhone} onChange={e => setAddrPhone(e.target.value)} className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" required />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" id="is_default" checked={addrDefault} onChange={e => setAddrDefault(e.target.checked)} className="accent-gold" />
+                    <label htmlFor="is_default" className="text-sm text-foreground">Set as default address</label>
+                  </div>
                   <div className="flex gap-4 mt-4">
-                    <button type="submit" className="bg-gold text-background px-6 py-2 text-xs font-bold tracking-[0.2em] uppercase hover:bg-foreground transition-colors">Save</button>
+                    <button type="submit" className="bg-gold text-background px-6 py-2 text-xs font-bold tracking-[0.2em] uppercase hover:bg-foreground transition-colors">Save Address</button>
                     <button type="button" onClick={() => setIsAddingAddress(false)} className="border border-foreground/20 text-foreground px-6 py-2 text-xs font-bold tracking-[0.2em] uppercase hover:bg-foreground/5 transition-colors">Cancel</button>
                   </div>
                 </form>
               ) : (
-                <div className="border border-gold p-6 relative">
-                  <div className="absolute top-0 right-0 bg-gold text-background text-[10px] font-bold px-3 py-1 uppercase tracking-widest">Default</div>
-                  <h3 className="text-foreground font-bold mb-2 tracking-wide">{user?.name || "Hussain Ali"}</h3>
-                  <p className="text-foreground/60 text-sm leading-relaxed mb-4">
-                    123 Luxury Avenue, Suite 400<br />
-                    Karachi, Sindh 74000<br />
-                    Pakistan
-                  </p>
-                  <div className="flex gap-4">
-                    <button className="text-xs text-foreground hover:text-gold uppercase tracking-widest">Edit</button>
-                    <button className="text-xs text-foreground/40 hover:text-red-400 uppercase tracking-widest">Delete</button>
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {addresses.length === 0 ? (
+                    <div className="col-span-2 py-8 text-center text-foreground/50 border border-dashed border-foreground/20">
+                      No addresses saved yet.
+                    </div>
+                  ) : (
+                    addresses.map((address) => (
+                      <div key={address.id} className={`border p-6 relative ${address.is_default ? 'border-gold' : 'border-foreground/10'}`}>
+                        {address.is_default && (
+                          <div className="absolute top-0 right-0 bg-gold text-background text-[10px] font-bold px-3 py-1 uppercase tracking-widest">Default</div>
+                        )}
+                        <h3 className="text-foreground font-bold mb-1 tracking-wide">{address.full_name} <span className="text-foreground/50 font-normal text-xs ml-2">({address.label})</span></h3>
+                        <p className="text-foreground/60 text-sm leading-relaxed mb-4">
+                          {address.street}<br />
+                          {address.city}, {address.province} {address.postal_code}<br />
+                          {address.phone}
+                        </p>
+                        <div className="flex gap-4">
+                          <button onClick={() => handleDeleteAddress(address.id)} className="text-xs text-foreground/40 hover:text-red-400 uppercase tracking-widest">Delete</button>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               )}
             </div>
@@ -551,9 +696,7 @@ function AccountContent() {
     <>
       <Header />
       <main className="flex-1 w-full bg-perfume-main min-h-screen relative overflow-hidden">
-        {/* Global Noise overlay */}
         <div className="absolute inset-0 bg-noise opacity-30 pointer-events-none z-0"></div>
-        
         {isLoggedIn ? renderLoggedInView() : renderLoggedOutView()}
       </main>
       <Footer />
