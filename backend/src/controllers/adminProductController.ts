@@ -1,0 +1,102 @@
+import { Request, Response } from 'express';
+import prisma from '../config/database';
+import cloudinary from '../config/cloudinary';
+import axios from 'axios';
+import { ENV } from '../config/env';
+
+const uploadToCloudinary = (buffer: Buffer): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { folder: 'auriq_products' },
+      (error, result) => {
+        if (result) resolve(result);
+        else reject(error);
+      }
+    );
+    uploadStream.end(buffer);
+  });
+};
+
+const revalidateFrontend = async (tag: string) => {
+  try {
+    // Attempt to revalidate frontend cache
+    await axios.post('http://localhost:3000/api/revalidate', {
+      tag,
+      secret: ENV.REVALIDATION_SECRET
+    });
+  } catch (error) {
+    console.error('Failed to revalidate frontend cache:', error);
+  }
+};
+
+export const createProduct = async (req: Request, res: Response) => {
+  try {
+    const { name, brand, description, category_id, is_active, is_featured, is_best_seller, variants_json } = req.body;
+    const files = req.files as Express.Multer.File[];
+
+    let uploadedImages: string[] = [];
+    if (files && files.length > 0) {
+      for (const file of files) {
+        const result = await uploadToCloudinary(file.buffer);
+        uploadedImages.push(result.secure_url);
+      }
+    }
+
+    const product = await prisma.product.create({
+      data: {
+        name,
+        slug: name.toLowerCase().replace(/ /g, '-'),
+        brand,
+        description,
+        category_id: parseInt(category_id),
+        is_active: is_active === 'true',
+        is_featured: is_featured === 'true',
+        is_best_seller: is_best_seller === 'true',
+        images: {
+          create: uploadedImages.map((url, index) => ({
+            image_url: url,
+            sort_order: index
+          }))
+        }
+      }
+    });
+
+    if (variants_json) {
+      const variants = JSON.parse(variants_json);
+      for (const v of variants) {
+         await prisma.productVariant.create({
+           data: {
+             product_id: product.id,
+             size_ml: v.size_ml,
+             price: v.price,
+             stock_quantity: v.stock_quantity,
+             sku: v.sku
+           }
+         });
+      }
+    }
+
+    await revalidateFrontend('products');
+
+    res.json({ success: true, data: product });
+  } catch (error) {
+    console.error('CREATE PRODUCT ERROR:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+export const getAllProducts = async (req: Request, res: Response) => {
+  try {
+    const products = await prisma.product.findMany({
+      include: {
+        category: true,
+        variants: true,
+        images: true,
+      }
+    });
+    res.json({ success: true, data: products });
+  } catch (error) {
+    console.error('ADMIN GET PRODUCTS ERROR:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};

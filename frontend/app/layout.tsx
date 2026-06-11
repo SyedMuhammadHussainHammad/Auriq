@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "./components/ThemeProvider";
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
 const inter = Inter({
   variable: "--font-inter",
@@ -33,9 +33,9 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground font-medium">
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID'}>
           {children}
-        </ThemeProvider>
+        </GoogleOAuthProvider>
       </body>
     </html>
   );

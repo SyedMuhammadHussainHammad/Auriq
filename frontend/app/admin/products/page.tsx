@@ -1,19 +1,75 @@
 "use client";
 
-import { Plus, Edit, Trash2, Search, Filter } from "lucide-react";
+import { Plus, Edit, Trash2, Search, Filter, Loader2 } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Modal from "../../components/ui/Modal";
+import { adminProductService } from "../services/adminProductService";
 
 export default function AdminProducts() {
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
-  const products = [
-    { id: 1, name: "Royal Oud", category: "Woody", price: "Rs. 15,000", stock: 45, image: "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=2787&auto=format&fit=crop" },
-    { id: 2, name: "Tuscan Leather", category: "Leather", price: "Rs. 12,800", stock: 12, image: "https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?q=80&w=2787&auto=format&fit=crop" },
-    { id: 3, name: "Baccarat Rouge", category: "Oriental", price: "Rs. 18,200", stock: 0, image: "https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=2796&auto=format&fit=crop" },
-    { id: 4, name: "Aventus", category: "Fresh", price: "Rs. 14,000", stock: 89, image: "https://images.unsplash.com/photo-1595425970377-c9703cc48a7e?q=80&w=2800&auto=format&fit=crop" },
-    { id: 5, name: "Oud Wood", category: "Woody", price: "Rs. 16,500", stock: 34, image: "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=2787&auto=format&fit=crop" },
-  ];
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const res = await adminProductService.getAll();
+      if (res.success) {
+        setProducts(res.data);
+      }
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const handleAddProduct = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setSaving(true);
+    setError("");
+
+    try {
+      const form = e.currentTarget;
+      const formData = new FormData(form);
+      
+      // Inject standard values required by backend
+      formData.append("brand", "Auriq");
+      formData.append("is_active", "true");
+      
+      // Build variants_json from Price and Stock inputs
+      const price = formData.get("price");
+      const stock = formData.get("stock_quantity");
+      const variant = {
+        size_ml: 100,
+        price: Number(price),
+        stock_quantity: Number(stock),
+        sku: `AQ-${Math.floor(Math.random() * 10000)}`
+      };
+      formData.append("variants_json", JSON.stringify([variant]));
+      
+      // Remove temporary keys before sending to avoid Express confusion
+      formData.delete("price");
+      formData.delete("stock_quantity");
+
+      const res = await adminProductService.create(formData);
+      if (res.success) {
+        setIsAddProductOpen(false);
+        fetchProducts();
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to add product");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-8">
@@ -53,105 +109,113 @@ export default function AdminProducts() {
 
       {/* Product Table */}
       <div className="bg-background rounded-xl border border-foreground/10 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-foreground/10 text-[10px] uppercase tracking-widest text-foreground/50 bg-foreground/[0.02]">
-                <th className="p-4 font-bold w-12">
-                  <input type="checkbox" className="accent-gold w-4 h-4 rounded border-foreground/30" />
-                </th>
-                <th className="p-4 font-bold">Product</th>
-                <th className="p-4 font-bold">Category</th>
-                <th className="p-4 font-bold">Price</th>
-                <th className="p-4 font-bold">Stock</th>
-                <th className="p-4 font-bold text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((product) => (
-                <tr key={product.id} className="border-b border-foreground/5 hover:bg-foreground/[0.02] transition-colors text-sm group">
-                  <td className="p-4">
+        <div className="overflow-x-auto min-h-[300px]">
+          {loading ? (
+            <div className="flex items-center justify-center h-64">
+              <Loader2 className="w-8 h-8 animate-spin text-gold" />
+            </div>
+          ) : (
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-foreground/10 text-[10px] uppercase tracking-widest text-foreground/50 bg-foreground/[0.02]">
+                  <th className="p-4 font-bold w-12">
                     <input type="checkbox" className="accent-gold w-4 h-4 rounded border-foreground/30" />
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-4">
-                      <div className="relative w-12 h-12 rounded overflow-hidden bg-foreground/5 flex-shrink-0">
-                        <Image src={product.image} alt={product.name} fill className="object-cover" />
-                      </div>
-                      <span className="font-bold text-foreground tracking-wide">{product.name}</span>
-                    </div>
-                  </td>
-                  <td className="p-4 text-foreground/80 font-medium">{product.category}</td>
-                  <td className="p-4 font-semibold text-foreground">{product.price}</td>
-                  <td className="p-4">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider
-                      ${product.stock > 20 ? 'bg-green-500/10 text-green-500' : 
-                        product.stock > 0 ? 'bg-yellow-500/10 text-yellow-500' : 
-                        'bg-red-500/10 text-red-500'}`}
-                    >
-                      {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
-                    </span>
-                  </td>
-                  <td className="p-4 text-right">
-                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="text-foreground/50 hover:text-gold transition-colors p-2 bg-foreground/5 rounded-lg">
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button className="text-foreground/50 hover:text-red-500 transition-colors p-2 bg-foreground/5 rounded-lg">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
+                  </th>
+                  <th className="p-4 font-bold">Product</th>
+                  <th className="p-4 font-bold">Category ID</th>
+                  <th className="p-4 font-bold">Price (Base)</th>
+                  <th className="p-4 font-bold">Stock</th>
+                  <th className="p-4 font-bold text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        
-        {/* Pagination */}
-        <div className="p-4 border-t border-foreground/10 flex items-center justify-between text-xs font-medium text-foreground/60">
-          <span>Showing 1 to 5 of 24 products</span>
-          <div className="flex items-center gap-2">
-            <button className="px-3 py-1 rounded border border-foreground/10 hover:border-gold transition-colors disabled:opacity-50">Prev</button>
-            <button className="px-3 py-1 rounded border border-foreground/10 bg-gold/10 text-gold transition-colors">1</button>
-            <button className="px-3 py-1 rounded border border-foreground/10 hover:border-gold transition-colors">2</button>
-            <button className="px-3 py-1 rounded border border-foreground/10 hover:border-gold transition-colors">3</button>
-            <button className="px-3 py-1 rounded border border-foreground/10 hover:border-gold transition-colors">Next</button>
-          </div>
+              </thead>
+              <tbody>
+                {products.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-12 text-foreground/50 text-sm">
+                      No products found. Add a product to get started!
+                    </td>
+                  </tr>
+                ) : products.map((product) => {
+                  const baseVariant = product.variants?.[0] || { price: 0, stock_quantity: 0 };
+                  const imageUrl = product.images?.[0]?.image_url || "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=2787&auto=format&fit=crop";
+                  
+                  return (
+                    <tr key={product.id} className="border-b border-foreground/5 hover:bg-foreground/[0.02] transition-colors text-sm group">
+                      <td className="p-4">
+                        <input type="checkbox" className="accent-gold w-4 h-4 rounded border-foreground/30" />
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-4">
+                          <div className="relative w-12 h-12 rounded overflow-hidden bg-foreground/5 flex-shrink-0">
+                            <Image src={imageUrl} alt={product.name} fill className="object-cover" />
+                          </div>
+                          <span className="font-bold text-foreground tracking-wide">{product.name}</span>
+                        </div>
+                      </td>
+                      <td className="p-4 text-foreground/80 font-medium">{product.category_id}</td>
+                      <td className="p-4 font-semibold text-foreground">Rs. {baseVariant.price}</td>
+                      <td className="p-4">
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider
+                          ${baseVariant.stock_quantity > 20 ? 'bg-green-500/10 text-green-500' : 
+                            baseVariant.stock_quantity > 0 ? 'bg-yellow-500/10 text-yellow-500' : 
+                            'bg-red-500/10 text-red-500'}`}
+                        >
+                          {baseVariant.stock_quantity > 0 ? `${baseVariant.stock_quantity} in stock` : 'Out of stock'}
+                        </span>
+                      </td>
+                      <td className="p-4 text-right">
+                        <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button className="text-foreground/50 hover:text-gold transition-colors p-2 bg-foreground/5 rounded-lg">
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button className="text-foreground/50 hover:text-red-500 transition-colors p-2 bg-foreground/5 rounded-lg">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 
       {/* Modals */}
       <Modal isOpen={isAddProductOpen} onClose={() => setIsAddProductOpen(false)} title="Add New Product" maxWidth="max-w-2xl">
-        <form className="flex flex-col gap-6" onSubmit={(e) => { e.preventDefault(); setIsAddProductOpen(false); }}>
+        <form className="flex flex-col gap-6" onSubmit={handleAddProduct}>
+          
+          {error && <div className="text-red-500 text-sm bg-red-500/10 p-3 rounded-lg text-center">{error}</div>}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="flex flex-col gap-2">
               <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Product Name</label>
-              <input type="text" placeholder="e.g. Royal Oud" className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground" required />
+              <input type="text" name="name" placeholder="e.g. Royal Oud" className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground" required />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Category</label>
-              <select className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground *:bg-background" required>
-                <option value="woody">Woody</option>
-                <option value="floral">Floral</option>
-                <option value="fresh">Fresh</option>
-              </select>
+              <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Category ID</label>
+              <input type="number" name="category_id" placeholder="1" className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground" required />
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Price (Rs.)</label>
-              <input type="number" placeholder="15000" className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground" required />
+              <input type="number" name="price" placeholder="15000" className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground" required />
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Stock Quantity</label>
-              <input type="number" placeholder="50" className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground" required />
+              <input type="number" name="stock_quantity" placeholder="50" className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground" required />
             </div>
             <div className="flex flex-col gap-2 md:col-span-2">
-              <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Image URL</label>
-              <input type="url" placeholder="https://..." className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground" required />
+              <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Description</label>
+              <textarea name="description" placeholder="A rich, woody fragrance..." rows={3} className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground" required />
+            </div>
+            <div className="flex flex-col gap-2 md:col-span-2">
+              <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Upload Images</label>
+              <input type="file" name="images" multiple accept="image/*" className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-gold/10 file:text-gold hover:file:bg-gold/20" required />
             </div>
           </div>
-          <button type="submit" className="w-full bg-gold text-background font-bold uppercase tracking-widest py-3 rounded-lg text-sm mt-4 hover:bg-foreground transition-colors">
-            Save Product
+          <button type="submit" disabled={saving} className="w-full bg-gold text-background font-bold uppercase tracking-widest py-3 rounded-lg text-sm mt-4 hover:bg-gold/90 transition-colors disabled:opacity-50">
+            {saving ? "Saving Product..." : "Save Product"}
           </button>
         </form>
       </Modal>

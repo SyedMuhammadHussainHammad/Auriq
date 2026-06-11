@@ -1,17 +1,173 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { User, Mail, Lock, LogOut, Package, MapPin, CreditCard, Clock, ChevronRight } from "lucide-react";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
+import { apiFetch } from "../utils/api";
+import { useGoogleLogin } from '@react-oauth/google';
+import FacebookLogin from 'react-facebook-login/dist/facebook-login-render-props';
 
-export default function AccountPage() {
+function AccountContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeTab, setActiveTab] = useState("orders");
+  const [isAddingAddress, setIsAddingAddress] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  // Login State
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
+
+  // Register State
+  const [regFirstName, setRegFirstName] = useState("");
+  const [regLastName, setRegLastName] = useState("");
+  const [regEmail, setRegEmail] = useState("");
+  const [regPassword, setRegPassword] = useState("");
+  const [regError, setRegError] = useState("");
+  const [regLoading, setRegLoading] = useState(false);
+
+  // User State
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const checkLoginState = () => {
+      const token = localStorage.getItem('auriqAccessToken');
+      const storedUser = localStorage.getItem('auriqUser');
+      if (token && storedUser) {
+        setIsLoggedIn(true);
+        try {
+          setUser(JSON.parse(storedUser));
+        } catch (e) {
+          console.error("Failed to parse user");
+        }
+      } else {
+        setIsLoggedIn(false);
+        setUser(null);
+      }
+    };
+
+    checkLoginState();
+
+    const tab = searchParams.get('tab');
+    if (tab) setActiveTab(tab);
+
+    window.addEventListener('loginStateChange', checkLoginState);
+    return () => window.removeEventListener('loginStateChange', checkLoginState);
+  }, [searchParams]);
+
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError("");
+    setLoginLoading(true);
+    
+    try {
+      const response = await apiFetch('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+      });
+      
+      if (response.success) {
+        localStorage.setItem('auriqAccessToken', response.data.accessToken);
+        localStorage.setItem('auriqRefreshToken', response.data.refreshToken);
+        localStorage.setItem('auriqUser', JSON.stringify(response.data.user));
+        window.dispatchEvent(new Event('loginStateChange'));
+      }
+    } catch (err: any) {
+      setLoginError(err.message || 'Login failed. Please try again.');
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRegError("");
+    setRegLoading(true);
+    
+    try {
+      const name = `${regFirstName} ${regLastName}`.trim();
+      const response = await apiFetch('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({ name, email: regEmail, password: regPassword }),
+      });
+      
+      if (response.success) {
+        localStorage.setItem('auriqAccessToken', response.data.accessToken);
+        localStorage.setItem('auriqRefreshToken', response.data.refreshToken);
+        localStorage.setItem('auriqUser', JSON.stringify(response.data.user));
+        window.dispatchEvent(new Event('loginStateChange'));
+      }
+    } catch (err: any) {
+      setRegError(err.message || 'Registration failed. Please try again.');
+    } finally {
+      setRegLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      const refreshToken = localStorage.getItem('auriqRefreshToken');
+      if (refreshToken) {
+        await apiFetch('/auth/logout', {
+          method: 'POST',
+          body: JSON.stringify({ refreshToken }),
+        });
+      }
+    } catch (err) {
+      console.error("Logout error", err);
+    } finally {
+      localStorage.removeItem('auriqAccessToken');
+      localStorage.removeItem('auriqRefreshToken');
+      localStorage.removeItem('auriqUser');
+      window.dispatchEvent(new Event('loginStateChange'));
+      router.push('/');
+    }
+  };
+
+  const handleSocialLogin = async (provider: 'google' | 'facebook', token: string) => {
+    try {
+      setLoginLoading(true);
+      setLoginError("");
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/${provider}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(provider === 'google' ? { token } : { accessToken: token }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || `${provider} login failed`);
+      
+      localStorage.setItem('auriqAccessToken', data.data.accessToken);
+      localStorage.setItem('auriqRefreshToken', data.data.refreshToken);
+      localStorage.setItem('auriqUser', JSON.stringify(data.data.user));
+      window.dispatchEvent(new Event('loginStateChange'));
+    } catch (err: any) {
+      setLoginError(err.message || `${provider} login failed`);
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const googleLogin = useGoogleLogin({
+    onSuccess: (tokenResponse) => handleSocialLogin('google', tokenResponse.access_token),
+    onError: () => setLoginError('Google login failed'),
+  });
+
+  const responseFacebook = (response: any) => {
+    if (response.accessToken) {
+      handleSocialLogin('facebook', response.accessToken);
+    } else {
+      setLoginError('Facebook login failed');
+    }
+  };
 
   // --- LOGGED OUT STATE UI ---
-  const LoggedOutView = () => (
+  const renderLoggedOutView = () => (
     <div className="container-lux pt-16 pb-24">
       <div className="text-center mb-16">
         <span className="text-gold text-xs font-bold tracking-[0.3em] uppercase mb-4 block">Membership</span>
@@ -25,7 +181,8 @@ export default function AccountPage() {
         {/* Sign In Form */}
         <div className="flex-1 lux-glass-card p-8 md:p-12 relative z-10">
           <h2 className="text-2xl font-serif text-foreground mb-8 font-bold border-b border-foreground/10 pb-4">Sign In</h2>
-          <form className="flex flex-col gap-6" onSubmit={(e) => { e.preventDefault(); setIsLoggedIn(true); }}>
+          <form className="flex flex-col gap-6" onSubmit={handleLoginSubmit}>
+            {loginError && <div className="text-red-500 text-xs font-bold bg-red-500/10 p-3 border border-red-500/20">{loginError}</div>}
             <div className="flex flex-col gap-3 group">
               <label htmlFor="login-email" className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">Email Address</label>
               <div className="relative">
@@ -33,6 +190,8 @@ export default function AccountPage() {
                 <input
                   type="email"
                   id="login-email"
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
                   className="w-full bg-transparent border-b border-foreground/10 py-2 pl-8 text-sm focus:outline-none focus:border-gold transition-colors text-foreground"
                   required
                 />
@@ -46,7 +205,10 @@ export default function AccountPage() {
                 <input
                   type="password"
                   id="login-password"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
                   className="w-full bg-transparent border-b border-foreground/10 py-2 pl-8 text-sm focus:outline-none focus:border-gold transition-colors text-foreground"
+                  minLength={8}
                   required
                 />
               </div>
@@ -56,9 +218,41 @@ export default function AccountPage() {
               <Link href="#" className="text-xs text-foreground/50 hover:text-gold transition-colors">Forgot Password?</Link>
             </div>
 
-            <button type="submit" className="w-full bg-gold text-background py-4 mt-4 font-bold tracking-[0.2em] uppercase hover:bg-foreground transition-colors">
-              Sign In
+            <button type="submit" disabled={loginLoading} className="w-full bg-gold text-background py-4 mt-4 font-bold tracking-[0.2em] uppercase hover:bg-foreground transition-colors disabled:opacity-50">
+              {loginLoading ? "Signing In..." : "Sign In"}
             </button>
+
+            <div className="relative flex items-center py-2 mt-2">
+              <div className="flex-grow border-t border-foreground/10"></div>
+              <span className="flex-shrink-0 mx-4 text-[10px] uppercase tracking-[0.2em] text-foreground/40 font-bold">Or continue with</span>
+              <div className="flex-grow border-t border-foreground/10"></div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <button type="button" onClick={() => googleLogin()} className="flex items-center justify-center gap-3 w-full border border-foreground/20 text-foreground py-3 text-xs font-bold tracking-widest uppercase hover:bg-foreground/5 transition-colors">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                </svg>
+                Google
+              </button>
+              <FacebookLogin
+                appId={process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || 'YOUR_FACEBOOK_APP_ID'}
+                autoLoad={false}
+                fields="name,email,picture"
+                callback={responseFacebook}
+                render={(renderProps: any) => (
+                  <button type="button" onClick={renderProps.onClick} className="flex items-center justify-center gap-3 w-full border border-foreground/20 text-foreground py-3 text-xs font-bold tracking-widest uppercase hover:bg-foreground/5 transition-colors">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    </svg>
+                    Facebook
+                  </button>
+                )}
+              />
+            </div>
           </form>
         </div>
 
@@ -66,33 +260,58 @@ export default function AccountPage() {
         <div className="hidden md:block w-px bg-foreground/10"></div>
 
         {/* Register Form */}
-        <div className="flex-1 p-8 md:p-12 relative z-10 border border-foreground/5 bg-foreground/[0.02]">
+        <div className="flex-1 lux-glass-card p-8 md:p-12 relative z-10 border border-foreground/5 bg-foreground/[0.02]">
           <h2 className="text-2xl font-serif text-foreground mb-8 font-bold border-b border-foreground/10 pb-4">Create Account</h2>
-          <form className="flex flex-col gap-6" onSubmit={(e) => { e.preventDefault(); setIsLoggedIn(true); }}>
+          <form className="flex flex-col gap-6" onSubmit={handleRegisterSubmit}>
+            {regError && <div className="text-red-500 text-xs font-bold bg-red-500/10 p-3 border border-red-500/20">{regError}</div>}
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-3 group">
                 <label htmlFor="reg-first" className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">First Name</label>
-                <input type="text" id="reg-first" className="w-full bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" required />
+                <input type="text" id="reg-first" value={regFirstName} onChange={(e) => setRegFirstName(e.target.value)} className="w-full bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" required />
               </div>
               <div className="flex flex-col gap-3 group">
                 <label htmlFor="reg-last" className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">Last Name</label>
-                <input type="text" id="reg-last" className="w-full bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" required />
+                <input type="text" id="reg-last" value={regLastName} onChange={(e) => setRegLastName(e.target.value)} className="w-full bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" required />
               </div>
             </div>
 
             <div className="flex flex-col gap-3 group">
               <label htmlFor="reg-email" className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">Email Address</label>
-              <input type="email" id="reg-email" className="w-full bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" required />
+              <input type="email" id="reg-email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} className="w-full bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" required />
             </div>
 
             <div className="flex flex-col gap-3 group">
               <label htmlFor="reg-password" className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">Password</label>
-              <input type="password" id="reg-password" className="w-full bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" required />
+              <input type="password" id="reg-password" value={regPassword} onChange={(e) => setRegPassword(e.target.value)} className="w-full bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" minLength={8} required />
             </div>
 
-            <button type="submit" className="w-full border border-foreground/20 text-foreground py-4 mt-4 font-bold tracking-[0.2em] uppercase hover:bg-foreground hover:text-background transition-colors">
-              Register
+            <button type="submit" disabled={regLoading} className="w-full border border-foreground/20 text-foreground py-4 mt-4 font-bold tracking-[0.2em] uppercase hover:bg-foreground hover:text-background transition-colors disabled:opacity-50">
+              {regLoading ? "Registering..." : "Register"}
             </button>
+
+            <div className="relative flex items-center py-2 mt-2">
+              <div className="flex-grow border-t border-foreground/10"></div>
+              <span className="flex-shrink-0 mx-4 text-[10px] uppercase tracking-[0.2em] text-foreground/40 font-bold">Or register with</span>
+              <div className="flex-grow border-t border-foreground/10"></div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <button type="button" onClick={() => alert('Social registration not implemented yet')} className="flex items-center justify-center gap-3 w-full border border-foreground/20 text-foreground py-3 text-xs font-bold tracking-widest uppercase hover:bg-foreground/5 transition-colors">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                </svg>
+                Google
+              </button>
+              <button type="button" onClick={() => alert('Social registration not implemented yet')} className="flex items-center justify-center gap-3 w-full border border-foreground/20 text-foreground py-3 text-xs font-bold tracking-widest uppercase hover:bg-foreground/5 transition-colors">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                </svg>
+                Facebook
+              </button>
+            </div>
           </form>
         </div>
       </div>
@@ -100,17 +319,17 @@ export default function AccountPage() {
   );
 
   // --- LOGGED IN STATE UI ---
-  const LoggedInView = () => (
+  const renderLoggedInView = () => (
     <div className="container-lux pt-12 pb-24">
       
       {/* Dashboard Header */}
       <div className="mb-12 border-b border-foreground/10 pb-6 flex items-end justify-between">
         <div>
           <span className="text-gold text-xs font-bold tracking-[0.3em] uppercase mb-2 block">Welcome Back</span>
-          <h1 className="text-3xl md:text-5xl font-serif text-foreground font-bold tracking-widest">Hussain Ali</h1>
+          <h1 className="text-3xl md:text-5xl font-serif text-foreground font-bold tracking-widest">{user?.name || "Welcome"}</h1>
         </div>
         <button 
-          onClick={() => setIsLoggedIn(false)}
+          onClick={handleLogout}
           className="hidden md:flex items-center gap-2 text-foreground/50 hover:text-red-400 transition-colors text-xs font-bold tracking-[0.2em] uppercase"
         >
           <LogOut className="w-4 h-4" />
@@ -127,7 +346,7 @@ export default function AccountPage() {
           >
             <div className="flex items-center gap-3">
               <Package className="w-5 h-5" />
-              <span className="font-medium tracking-wide text-sm uppercase">Order History</span>
+              <span className="font-medium tracking-wide text-sm uppercase">Track Orders</span>
             </div>
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -155,7 +374,7 @@ export default function AccountPage() {
           </button>
 
           <button 
-            onClick={() => setIsLoggedIn(false)}
+            onClick={handleLogout}
             className="flex md:hidden items-center justify-between p-4 border border-foreground/10 text-foreground/60 hover:text-red-400 hover:bg-foreground/5 transition-colors mt-8"
           >
             <div className="flex items-center gap-3">
@@ -169,38 +388,43 @@ export default function AccountPage() {
         <div className="flex-1 lux-glass-card p-8 min-h-[400px]">
           
           {activeTab === 'orders' && (
-            <div className="flex flex-col gap-6 relative z-10">
-              <h2 className="text-2xl font-serif text-foreground mb-2 font-bold">Order History</h2>
+            <div className="flex flex-col gap-2 relative z-10">
+              <h2 className="text-2xl font-serif text-foreground mb-6 font-bold">Track Your Order</h2>
               
-              {/* Mock Order Table */}
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm text-foreground/80">
-                  <thead className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 border-b border-foreground/10">
-                    <tr>
-                      <th className="pb-4 font-bold">Order #</th>
-                      <th className="pb-4 font-bold">Date</th>
-                      <th className="pb-4 font-bold">Status</th>
-                      <th className="pb-4 font-bold">Total</th>
-                      <th className="pb-4 font-bold"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-b border-foreground/5 hover:bg-foreground/[0.02] transition-colors">
-                      <td className="py-6 font-medium text-foreground">#AQ-8932</td>
-                      <td className="py-6">Oct 12, 2025</td>
-                      <td className="py-6"><span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs">Delivered</span></td>
-                      <td className="py-6 text-foreground font-medium">Rs. 34,000</td>
-                      <td className="py-6 text-right"><Link href="#" className="text-gold hover:underline text-xs tracking-widest uppercase">View</Link></td>
-                    </tr>
-                    <tr className="hover:bg-foreground/[0.02] transition-colors">
-                      <td className="py-6 font-medium text-foreground">#AQ-7410</td>
-                      <td className="py-6">Aug 05, 2025</td>
-                      <td className="py-6"><span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs">Delivered</span></td>
-                      <td className="py-6 text-foreground font-medium">Rs. 15,000</td>
-                      <td className="py-6 text-right"><Link href="#" className="text-gold hover:underline text-xs tracking-widest uppercase">View</Link></td>
-                    </tr>
-                  </tbody>
-                </table>
+              <form className="flex flex-col md:flex-row gap-4 mb-8" onSubmit={(e) => { e.preventDefault(); alert('Tracking information will be connected to the backend soon!'); }}>
+                <div className="flex-1 relative group">
+                  <Package className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/30 group-focus-within:text-gold transition-colors" />
+                  <input type="text" placeholder="Enter your Order ID (e.g. AQ-8932)" required className="w-full bg-transparent border-b border-foreground/20 py-3 pl-12 pr-4 text-sm focus:outline-none focus:border-gold transition-colors text-foreground font-medium tracking-wide" />
+                </div>
+                <button type="submit" className="bg-gold text-background px-8 py-3 text-xs font-bold tracking-[0.2em] uppercase hover:bg-foreground transition-colors shrink-0">
+                  Track
+                </button>
+              </form>
+
+              <div className="border-t border-foreground/10 pt-8">
+                <h3 className="text-[10px] font-bold tracking-[0.2em] uppercase text-foreground/50 mb-6">Recent Orders</h3>
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between p-6 border border-foreground/10 hover:border-gold/30 transition-colors gap-4 bg-foreground/[0.02]">
+                    <div>
+                      <p className="text-sm font-bold tracking-wide text-foreground mb-1">#AQ-8932</p>
+                      <p className="text-xs text-foreground/60 font-medium">Placed on Oct 12, 2025</p>
+                    </div>
+                    <div className="flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6">
+                      <span className="px-3 py-1 bg-green-500/10 text-green-500 rounded text-[10px] font-bold uppercase tracking-widest border border-green-500/20">Delivered</span>
+                      <Link href="/orders" className="text-gold hover:underline text-xs tracking-widest uppercase font-bold">View Details</Link>
+                    </div>
+                  </div>
+                  <div className="flex flex-col md:flex-row md:items-center justify-between p-6 border border-foreground/10 hover:border-gold/30 transition-colors gap-4 bg-foreground/[0.02]">
+                    <div>
+                      <p className="text-sm font-bold tracking-wide text-foreground mb-1">#AQ-7410</p>
+                      <p className="text-xs text-foreground/60 font-medium">Placed on Aug 05, 2025</p>
+                    </div>
+                    <div className="flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6">
+                      <span className="px-3 py-1 bg-gold/10 text-gold rounded text-[10px] font-bold uppercase tracking-widest border border-gold/20">Processing</span>
+                      <Link href="/orders" className="text-gold hover:underline text-xs tracking-widest uppercase font-bold">View Details</Link>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -208,22 +432,62 @@ export default function AccountPage() {
           {activeTab === 'profile' && (
             <div className="flex flex-col gap-6 relative z-10 max-w-xl">
               <h2 className="text-2xl font-serif text-foreground mb-6 font-bold">Profile Details</h2>
-              <form className="flex flex-col gap-6">
-                <div className="grid grid-cols-2 gap-6">
+              <form className="flex flex-col gap-6" onSubmit={(e) => { e.preventDefault(); alert('Profile details updated successfully!'); }}>
+                
+                {/* Personal Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="flex flex-col gap-3 group">
                     <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">First Name</label>
-                    <input type="text" defaultValue="Hussain" className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" />
+                    <input type="text" defaultValue={user?.name?.split(' ')[0] || ""} className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" />
                   </div>
                   <div className="flex flex-col gap-3 group">
                     <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">Last Name</label>
-                    <input type="text" defaultValue="Ali" className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" />
+                    <input type="text" defaultValue={user?.name?.split(' ').slice(1).join(' ') || ""} className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" />
                   </div>
                 </div>
-                <div className="flex flex-col gap-3 group">
-                  <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">Email Address</label>
-                  <input type="email" defaultValue="hussain@example.com" className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" />
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="flex flex-col gap-3 group">
+                    <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">Email Address</label>
+                    <input type="email" defaultValue={user?.email || ""} className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" disabled />
+                  </div>
+                  <div className="flex flex-col gap-3 group">
+                    <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">Phone Number</label>
+                    <input type="tel" defaultValue={user?.phone || ""} className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" />
+                  </div>
                 </div>
-                <button type="button" className="w-fit bg-gold text-background px-8 py-3 mt-4 text-xs font-bold tracking-[0.2em] uppercase hover:bg-foreground transition-colors">
+
+                {/* Password Change */}
+                <div className="mt-8 mb-4 border-t border-foreground/10 pt-8">
+                  <h3 className="text-sm font-bold tracking-widest uppercase text-foreground mb-6">Change Password</h3>
+                  {!isChangingPassword ? (
+                    <button type="button" onClick={() => setIsChangingPassword(true)} className="border border-foreground/20 text-foreground px-6 py-2 text-xs font-bold tracking-[0.2em] uppercase hover:bg-foreground/5 transition-colors">
+                      Update Password
+                    </button>
+                  ) : (
+                    <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="flex flex-col gap-3 group">
+                        <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">Old Password</label>
+                        <input type="password" placeholder="Enter current password" minLength={8} className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" required />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-3 group">
+                          <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">New Password</label>
+                          <input type="password" placeholder="Enter new password" minLength={8} className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" required />
+                        </div>
+                        <div className="flex flex-col gap-3 group">
+                          <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">Confirm New Password</label>
+                          <input type="password" placeholder="Retype new password" minLength={8} className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" required />
+                        </div>
+                      </div>
+                      <button type="button" onClick={() => setIsChangingPassword(false)} className="w-fit text-foreground/50 hover:text-red-400 px-0 py-2 text-xs font-bold tracking-[0.2em] uppercase transition-colors">
+                        Cancel Password Change
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <button type="submit" className="w-fit bg-gold text-background px-8 py-3 mt-4 text-xs font-bold tracking-[0.2em] uppercase hover:bg-foreground transition-colors">
                   Save Changes
                 </button>
               </form>
@@ -234,22 +498,47 @@ export default function AccountPage() {
             <div className="flex flex-col gap-6 relative z-10">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-serif text-foreground font-bold">Saved Addresses</h2>
-                <button className="text-gold text-xs tracking-widest uppercase hover:underline">Add New</button>
+                {!isAddingAddress && (
+                  <button onClick={() => setIsAddingAddress(true)} className="text-gold text-xs tracking-widest uppercase hover:underline">Add New</button>
+                )}
               </div>
               
-              <div className="border border-gold p-6 relative">
-                <div className="absolute top-0 right-0 bg-gold text-background text-[10px] font-bold px-3 py-1 uppercase tracking-widest">Default</div>
-                <h3 className="text-foreground font-bold mb-2 tracking-wide">Hussain Ali</h3>
-                <p className="text-foreground/60 text-sm leading-relaxed mb-4">
-                  123 Luxury Avenue, Suite 400<br />
-                  Karachi, Sindh 74000<br />
-                  Pakistan
-                </p>
-                <div className="flex gap-4">
-                  <button className="text-xs text-foreground hover:text-gold uppercase tracking-widest">Edit</button>
-                  <button className="text-xs text-foreground/40 hover:text-red-400 uppercase tracking-widest">Delete</button>
+              {isAddingAddress ? (
+                <form className="flex flex-col gap-6 bg-foreground/[0.02] border border-foreground/10 p-6" onSubmit={(e) => { e.preventDefault(); setIsAddingAddress(false); alert("Address saved successfully!"); }}>
+                  <div className="flex flex-col gap-3 group">
+                    <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">Street Address</label>
+                    <input type="text" className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" required />
+                  </div>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="flex flex-col gap-3 group">
+                      <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">City</label>
+                      <input type="text" className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" required />
+                    </div>
+                    <div className="flex flex-col gap-3 group">
+                      <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-light group-focus-within:text-gold transition-colors">Zip Code</label>
+                      <input type="text" className="bg-transparent border-b border-foreground/10 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground" required />
+                    </div>
+                  </div>
+                  <div className="flex gap-4 mt-4">
+                    <button type="submit" className="bg-gold text-background px-6 py-2 text-xs font-bold tracking-[0.2em] uppercase hover:bg-foreground transition-colors">Save</button>
+                    <button type="button" onClick={() => setIsAddingAddress(false)} className="border border-foreground/20 text-foreground px-6 py-2 text-xs font-bold tracking-[0.2em] uppercase hover:bg-foreground/5 transition-colors">Cancel</button>
+                  </div>
+                </form>
+              ) : (
+                <div className="border border-gold p-6 relative">
+                  <div className="absolute top-0 right-0 bg-gold text-background text-[10px] font-bold px-3 py-1 uppercase tracking-widest">Default</div>
+                  <h3 className="text-foreground font-bold mb-2 tracking-wide">{user?.name || "Hussain Ali"}</h3>
+                  <p className="text-foreground/60 text-sm leading-relaxed mb-4">
+                    123 Luxury Avenue, Suite 400<br />
+                    Karachi, Sindh 74000<br />
+                    Pakistan
+                  </p>
+                  <div className="flex gap-4">
+                    <button className="text-xs text-foreground hover:text-gold uppercase tracking-widest">Edit</button>
+                    <button className="text-xs text-foreground/40 hover:text-red-400 uppercase tracking-widest">Delete</button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 
@@ -265,9 +554,17 @@ export default function AccountPage() {
         {/* Global Noise overlay */}
         <div className="absolute inset-0 bg-noise opacity-30 pointer-events-none z-0"></div>
         
-        {isLoggedIn ? <LoggedInView /> : <LoggedOutView />}
+        {isLoggedIn ? renderLoggedInView() : renderLoggedOutView()}
       </main>
       <Footer />
     </>
+  );
+}
+
+export default function AccountPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-perfume-main" />}>
+      <AccountContent />
+    </Suspense>
   );
 }

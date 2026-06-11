@@ -191,10 +191,10 @@ export default function CartPage() {
                     </div>
                   </div>
 
-                  <button className="w-full bg-gold/90 backdrop-blur-md text-background py-4 mt-4 font-bold tracking-[0.2em] uppercase hover:bg-foreground hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] transition-all flex justify-center items-center gap-2">
+                  <Link href="/checkout" className="w-full bg-gold/90 backdrop-blur-md text-background py-4 mt-4 font-bold tracking-[0.2em] uppercase hover:bg-foreground hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] transition-all flex justify-center items-center gap-2">
                     <ShieldCheck className="w-5 h-5" />
                     Secure Checkout
-                  </button>
+                  </Link>
 
                   <div className="flex justify-center items-center gap-4 mt-2 opacity-50">
                     <CreditCard className="w-8 h-8 text-foreground" />

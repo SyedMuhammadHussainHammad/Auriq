@@ -3,12 +3,16 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight, ShieldCheck, CreditCard, Truck, CheckCircle2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ChevronRight, ShieldCheck, CreditCard, Truck, CheckCircle2, Smartphone, User, UserX } from "lucide-react";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 
 export default function CheckoutPage() {
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "cod">("card");
+  const router = useRouter();
+  const [isGuest, setIsGuest] = useState(true);
+  const [selectedAddress, setSelectedAddress] = useState(0);
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "cod" | "jazzcash" | "easypaisa">("card");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -18,8 +22,11 @@ export default function CheckoutPage() {
     // Simulate network request
     setTimeout(() => {
       setIsProcessing(false);
-      setIsSuccess(true);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (isGuest) {
+        router.push("/invoice");
+      } else {
+        router.push("/orders?loyalty=true");
+      }
     }, 2000);
   };
 
@@ -75,68 +82,133 @@ export default function CheckoutPage() {
             
             {/* Left Column: Form */}
             <div className="w-full lg:w-3/5">
+              {/* Account / Guest Toggle (For Testing Mockup) */}
+              <div className="mb-8 lux-glass-card p-6 flex flex-col sm:flex-row gap-4 border border-gold/30">
+                <button 
+                  type="button"
+                  onClick={() => setIsGuest(true)}
+                  className={`flex-1 py-3 px-4 flex items-center justify-center gap-3 text-sm font-bold tracking-widest uppercase transition-all ${isGuest ? 'bg-gold text-background' : 'bg-transparent text-foreground/50 border border-foreground/20 hover:text-gold hover:border-gold'}`}
+                >
+                  <UserX className="w-4 h-4" /> Guest Checkout
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => setIsGuest(false)}
+                  className={`flex-1 py-3 px-4 flex items-center justify-center gap-3 text-sm font-bold tracking-widest uppercase transition-all ${!isGuest ? 'bg-gold text-background' : 'bg-transparent text-foreground/50 border border-foreground/20 hover:text-gold hover:border-gold'}`}
+                >
+                  <User className="w-4 h-4" /> Member Login
+                </button>
+              </div>
+
               <form onSubmit={handleCheckout} className="flex flex-col gap-12">
                 
-                {/* Contact Information */}
-                <section>
-                  <h2 className="text-xl font-serif text-foreground font-bold tracking-wide mb-6 flex items-center gap-3">
-                    <span className="w-6 h-6 rounded-full bg-gold/20 flex items-center justify-center text-[10px] text-gold font-bold">1</span>
-                    Contact Information
-                  </h2>
-                  <div className="lux-glass-card p-6 md:p-8">
-                    <div className="flex flex-col gap-6">
-                      <div className="flex flex-col gap-2 group">
-                        <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">Email Address</label>
-                        <input type="email" required placeholder="you@example.com" className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors placeholder:text-foreground/20 text-foreground font-medium tracking-wide" />
+                {isGuest ? (
+                  <>
+                    {/* Contact Information */}
+                    <section>
+                      <h2 className="text-xl font-serif text-foreground font-bold tracking-wide mb-6 flex items-center gap-3">
+                        <span className="w-6 h-6 rounded-full bg-gold/20 flex items-center justify-center text-[10px] text-gold font-bold">1</span>
+                        Contact Information
+                      </h2>
+                      <div className="lux-glass-card p-6 md:p-8">
+                        <div className="flex flex-col gap-6">
+                          <div className="flex flex-col gap-2 group">
+                            <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">Email Address</label>
+                            <input type="email" required placeholder="you@example.com" className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors placeholder:text-foreground/20 text-foreground font-medium tracking-wide" />
+                          </div>
+                          <div className="flex flex-col gap-2 group">
+                            <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">Phone Number</label>
+                            <input type="tel" required placeholder="+1 (555) 000-0000" className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors placeholder:text-foreground/20 text-foreground font-medium tracking-wide" />
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex flex-col gap-2 group">
-                        <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">Phone Number</label>
-                        <input type="tel" required placeholder="+1 (555) 000-0000" className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors placeholder:text-foreground/20 text-foreground font-medium tracking-wide" />
-                      </div>
-                    </div>
-                  </div>
-                </section>
+                    </section>
 
-                {/* Shipping Address */}
-                <section>
-                  <h2 className="text-xl font-serif text-foreground font-bold tracking-wide mb-6 flex items-center gap-3">
-                    <span className="w-6 h-6 rounded-full bg-gold/20 flex items-center justify-center text-[10px] text-gold font-bold">2</span>
-                    Shipping Address
-                  </h2>
-                  <div className="lux-glass-card p-6 md:p-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="flex flex-col gap-2 group">
-                        <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">First Name</label>
-                        <input type="text" required className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground font-medium tracking-wide" />
+                    {/* Shipping Address */}
+                    <section>
+                      <h2 className="text-xl font-serif text-foreground font-bold tracking-wide mb-6 flex items-center gap-3">
+                        <span className="w-6 h-6 rounded-full bg-gold/20 flex items-center justify-center text-[10px] text-gold font-bold">2</span>
+                        Shipping Address
+                      </h2>
+                      <div className="lux-glass-card p-6 md:p-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="flex flex-col gap-2 group">
+                            <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">First Name</label>
+                            <input type="text" required className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground font-medium tracking-wide" />
+                          </div>
+                          <div className="flex flex-col gap-2 group">
+                            <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">Last Name</label>
+                            <input type="text" required className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground font-medium tracking-wide" />
+                          </div>
+                          <div className="flex flex-col gap-2 group md:col-span-2">
+                            <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">Address</label>
+                            <input type="text" required placeholder="Street address, P.O. box, etc." className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors placeholder:text-foreground/20 text-foreground font-medium tracking-wide" />
+                          </div>
+                          <div className="flex flex-col gap-2 group">
+                            <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">City</label>
+                            <input type="text" required className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground font-medium tracking-wide" />
+                          </div>
+                          <div className="flex flex-col gap-2 group">
+                            <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">Postal Code</label>
+                            <input type="text" required className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground font-medium tracking-wide" />
+                          </div>
+                          <div className="flex flex-col gap-2 group md:col-span-2">
+                            <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">Country</label>
+                            <select className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground font-medium tracking-wide appearance-none">
+                              <option value="US" className="bg-background">United States</option>
+                              <option value="UK" className="bg-background">United Kingdom</option>
+                              <option value="PK" className="bg-background">Pakistan</option>
+                              <option value="AE" className="bg-background">United Arab Emirates</option>
+                            </select>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex flex-col gap-2 group">
-                        <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">Last Name</label>
-                        <input type="text" required className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground font-medium tracking-wide" />
-                      </div>
-                      <div className="flex flex-col gap-2 group md:col-span-2">
-                        <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">Address</label>
-                        <input type="text" required placeholder="Street address, P.O. box, etc." className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors placeholder:text-foreground/20 text-foreground font-medium tracking-wide" />
-                      </div>
-                      <div className="flex flex-col gap-2 group">
-                        <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">City</label>
-                        <input type="text" required className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground font-medium tracking-wide" />
-                      </div>
-                      <div className="flex flex-col gap-2 group">
-                        <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">Postal Code</label>
-                        <input type="text" required className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground font-medium tracking-wide" />
-                      </div>
-                      <div className="flex flex-col gap-2 group md:col-span-2">
-                        <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">Country</label>
-                        <select className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground font-medium tracking-wide appearance-none">
-                          <option value="US" className="bg-background">United States</option>
-                          <option value="UK" className="bg-background">United Kingdom</option>
-                          <option value="PK" className="bg-background">Pakistan</option>
-                          <option value="AE" className="bg-background">United Arab Emirates</option>
-                        </select>
-                      </div>
+                    </section>
+                  </>
+                ) : (
+                  <section>
+                    <h2 className="text-xl font-serif text-foreground font-bold tracking-wide mb-6 flex items-center gap-3">
+                      <span className="w-6 h-6 rounded-full bg-gold/20 flex items-center justify-center text-[10px] text-gold font-bold">1 & 2</span>
+                      Select Shipping Address
+                    </h2>
+                    <div className="grid grid-cols-1 gap-4">
+                      {/* Address 1 */}
+                      <label className={`cursor-pointer lux-glass-card p-6 flex flex-col md:flex-row md:justify-between items-start gap-4 transition-all ${selectedAddress === 0 ? 'border-gold bg-gold/5 shadow-lg shadow-gold/5' : 'border-foreground/10 hover:border-gold/50'}`}>
+                        <div className="flex items-start gap-4">
+                          <input type="radio" name="saved_address" checked={selectedAddress === 0} onChange={() => setSelectedAddress(0)} className="accent-gold w-4 h-4 mt-1" />
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <p className="text-sm font-bold tracking-wide text-foreground">Hussain Ali</p>
+                              <span className="text-[10px] uppercase tracking-[0.2em] text-gold font-bold bg-gold/10 px-2 py-0.5 rounded border border-gold/20">Default</span>
+                            </div>
+                            <p className="text-sm font-medium tracking-wide text-foreground/60 leading-relaxed mt-2">
+                              Sindh madrasa tul islamia<br />
+                              Garikhata Karachi, 74000<br />
+                              Pakistan
+                            </p>
+                            <p className="text-xs font-semibold tracking-wide text-foreground/50 mt-3">+92 330 0383666</p>
+                          </div>
+                        </div>
+                      </label>
+                      
+                      {/* Address 2 */}
+                      <label className={`cursor-pointer lux-glass-card p-6 flex flex-col md:flex-row md:justify-between items-start gap-4 transition-all ${selectedAddress === 1 ? 'border-gold bg-gold/5 shadow-lg shadow-gold/5' : 'border-foreground/10 hover:border-gold/50'}`}>
+                        <div className="flex items-start gap-4">
+                          <input type="radio" name="saved_address" checked={selectedAddress === 1} onChange={() => setSelectedAddress(1)} className="accent-gold w-4 h-4 mt-1" />
+                          <div>
+                            <p className="text-sm font-bold tracking-wide text-foreground mb-1">Hussain Ali</p>
+                            <p className="text-sm font-medium tracking-wide text-foreground/60 leading-relaxed mt-2">
+                              123 Luxury Avenue, Suite 45<br />
+                              Gulberg III, Lahore, 54000<br />
+                              Pakistan
+                            </p>
+                            <p className="text-xs font-semibold tracking-wide text-foreground/50 mt-3">+92 330 0383666</p>
+                          </div>
+                        </div>
+                      </label>
                     </div>
-                  </div>
-                </section>
+                  </section>
+                )}
 
                 {/* Payment */}
                 <section>
@@ -168,6 +240,36 @@ export default function CheckoutPage() {
                           <div className="flex flex-col gap-2 group">
                             <input type="text" placeholder="CVC" className="bg-transparent border border-foreground/20 rounded p-3 text-sm focus:outline-none focus:border-gold transition-colors placeholder:text-foreground/30 text-foreground font-medium tracking-wide w-full" />
                           </div>
+                        </div>
+                      )}
+
+                      <label className={`flex items-center gap-4 p-4 border-t border-foreground/20 cursor-pointer transition-colors ${paymentMethod === 'jazzcash' ? 'bg-foreground/5' : 'hover:bg-foreground/5'}`}>
+                        <input type="radio" name="payment" value="jazzcash" checked={paymentMethod === 'jazzcash'} onChange={() => setPaymentMethod('jazzcash')} className="accent-gold w-4 h-4" />
+                        <Smartphone className="w-5 h-5 text-foreground/70" />
+                        <span className="text-sm font-semibold tracking-wide text-foreground">JazzCash</span>
+                      </label>
+                      
+                      {paymentMethod === 'jazzcash' && (
+                        <div className="p-4 border-t border-foreground/10 bg-foreground/5">
+                           <div className="flex flex-col gap-2 group w-full max-w-sm">
+                            <input type="text" placeholder="JazzCash Mobile Number (03XXXXXXXXX)" className="bg-transparent border border-foreground/20 rounded p-3 text-sm focus:outline-none focus:border-gold transition-colors placeholder:text-foreground/30 text-foreground font-medium tracking-wide w-full" />
+                          </div>
+                          <p className="text-xs text-foreground/60 font-medium tracking-wide mt-3">Please ensure your JazzCash account is active and has sufficient balance.</p>
+                        </div>
+                      )}
+
+                      <label className={`flex items-center gap-4 p-4 border-t border-foreground/20 cursor-pointer transition-colors ${paymentMethod === 'easypaisa' ? 'bg-foreground/5' : 'hover:bg-foreground/5'}`}>
+                        <input type="radio" name="payment" value="easypaisa" checked={paymentMethod === 'easypaisa'} onChange={() => setPaymentMethod('easypaisa')} className="accent-gold w-4 h-4" />
+                        <Smartphone className="w-5 h-5 text-foreground/70" />
+                        <span className="text-sm font-semibold tracking-wide text-foreground">EasyPaisa</span>
+                      </label>
+                      
+                      {paymentMethod === 'easypaisa' && (
+                        <div className="p-4 border-t border-foreground/10 bg-foreground/5">
+                           <div className="flex flex-col gap-2 group w-full max-w-sm">
+                            <input type="text" placeholder="EasyPaisa Mobile Number (03XXXXXXXXX)" className="bg-transparent border border-foreground/20 rounded p-3 text-sm focus:outline-none focus:border-gold transition-colors placeholder:text-foreground/30 text-foreground font-medium tracking-wide w-full" />
+                          </div>
+                          <p className="text-xs text-foreground/60 font-medium tracking-wide mt-3">You will receive an approval prompt on your EasyPaisa app.</p>
                         </div>
                       )}
 

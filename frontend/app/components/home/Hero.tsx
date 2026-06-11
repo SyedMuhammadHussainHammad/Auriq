@@ -3,52 +3,7 @@ import Image from "next/image";
 import { Heart, ShoppingBag, ArrowRight } from "lucide-react";
 import PromotionalCards from "./PromotionalCards";
 
-// Mock data for advertisements (Admin manageable in future)
-const advertisements = [
-  {
-    id: 1,
-    title: "The Midnight Collection",
-    subtitle: "New Arrival",
-    image: "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=2787&auto=format&fit=crop",
-    cta: "DISCOVER NOW",
-    url: "#",
-  },
-  {
-    id: 2,
-    title: "Summer Exclusives",
-    subtitle: "Limited Edition",
-    image: "https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?q=80&w=2787&auto=format&fit=crop",
-    cta: "SHOP SALE",
-    url: "#",
-  }
-];
-
-// Mock data for fallback featured perfumes
-const featuredPerfumes = [
-  {
-    id: 1,
-    name: "Royal Oud",
-    brand: "Auriq",
-    price: "Rs. 15,000",
-    image: "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=2787&auto=format&fit=crop",
-  },
-  {
-    id: 2,
-    name: "Tuscan Leather",
-    brand: "Auriq",
-    price: "Rs. 12,800",
-    image: "https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?q=80&w=2787&auto=format&fit=crop",
-  },
-  {
-    id: 3,
-    name: "Baccarat Rouge",
-    brand: "Auriq",
-    price: "Rs. 18,200",
-    image: "https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=2796&auto=format&fit=crop",
-  }
-];
-
-export default function Hero() {
+export default function Hero({ ads = [] }: { ads?: any[] }) {
   // Toggle this to test alternative mode
   const showAds = false; 
 
@@ -98,7 +53,7 @@ export default function Hero() {
 
         {/* Promotional Cards Overlay */}
         <div className="w-full max-w-7xl mx-auto mt-auto pb-4 md:pb-8">
-          <PromotionalCards className="w-full relative z-10" showNoise={false} />
+          <PromotionalCards ads={ads} className="w-full relative z-10" showNoise={false} />
         </div>
       </div>
     </section>

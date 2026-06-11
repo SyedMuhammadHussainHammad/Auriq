@@ -24,7 +24,7 @@ export default function Footer() {
               <li><Link href="/collections" className="hover:text-gold transition-colors">All Collections</Link></li>
               <li><Link href="/collections?sort=best-sellers" className="hover:text-gold transition-colors">Best Sellers</Link></li>
               <li><Link href="/collections?sort=new-arrivals" className="hover:text-gold transition-colors">New Arrivals</Link></li>
-              <li><Link href="#" className="hover:text-gold transition-colors">Gift Sets</Link></li>
+              <li><Link href="/gift-sets" className="hover:text-gold transition-colors">Gift Sets</Link></li>
             </ul>
           </div>
 

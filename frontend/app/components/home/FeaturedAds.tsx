@@ -5,37 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-const ads = [
-  {
-    id: 1,
-    tag: "Limited Time",
-    title: "Summer Sale 2026",
-    description: "Discover our newest range of intense, captivating fragrances designed for the modern connoisseur. Up to 30% off selected luxury perfumes.",
-    image: "https://images.unsplash.com/photo-1616401784845-180882ba9ba8?q=80&w=2940&auto=format&fit=crop",
-    link: "/collections?sort=best-sellers",
-    buttonText: "SHOP THE SALE",
-  },
-  {
-    id: 2,
-    tag: "Just In",
-    title: "The Midnight Collection",
-    description: "Embrace the elegance of the night with our new exclusive signature blends. Dark, woody, and irresistibly smooth.",
-    image: "https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=2796&auto=format&fit=crop",
-    link: "/collections?sort=new-arrivals",
-    buttonText: "DISCOVER NOW",
-  },
-  {
-    id: 3,
-    tag: "Exclusive",
-    title: "Luxury Gift Sets",
-    description: "The perfect present for the ones you cherish. Curated fragrance boxes wrapped in our signature gold foil packaging.",
-    image: "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=2787&auto=format&fit=crop",
-    link: "/collections",
-    buttonText: "VIEW GIFT SETS",
-  }
-];
-
-export default function FeaturedAds() {
+export default function FeaturedAds({ ads = [] }: { ads?: any[] }) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
 
@@ -60,7 +30,7 @@ export default function FeaturedAds() {
     setCurrentSlide((prev) => (prev === 0 ? ads.length - 1 : prev - 1));
   };
 
-  if (!isVisible) return null;
+  if (!isVisible || !ads || ads.length === 0) return null;
 
   return (
     <section className="w-full relative overflow-hidden bg-background group">
@@ -72,7 +42,7 @@ export default function FeaturedAds() {
         {ads.map((ad, index) => (
           <div key={ad.id} className="min-w-full h-full relative">
             <Image
-              src={ad.image}
+              src={ad.image_url || "https://images.unsplash.com/photo-1616401784845-180882ba9ba8?q=80&w=2940&auto=format&fit=crop"}
               alt={ad.title}
               fill
               className={`object-cover transition-transform duration-[10000ms] ${currentSlide === index ? 'scale-110' : 'scale-100'}`}
@@ -83,20 +53,20 @@ export default function FeaturedAds() {
             
             <div className="absolute inset-0 flex flex-col justify-center p-6 md:px-16 md:py-8 lg:w-1/2">
               <span className="text-gold tracking-[0.3em] text-[10px] md:text-xs font-bold mb-2 uppercase inline-block">
-                {ad.tag}
+                FEATURED
               </span>
               <h2 className="text-2xl md:text-4xl lg:text-5xl font-serif text-gradient-gold font-bold tracking-widest mb-2 leading-tight drop-shadow-md">
                 {ad.title}
               </h2>
               <p className="text-foreground/80 max-w-xl mb-4 text-xs md:text-sm tracking-wide font-medium hidden sm:block">
-                {ad.description}
+                {ad.description || "Discover our newest range of intense, captivating fragrances designed for the modern connoisseur."}
               </p>
               <div>
                 <Link 
-                  href={ad.link} 
+                  href={ad.link_url || "/collections"} 
                   className="inline-block px-6 py-3 bg-transparent border border-foreground/20 text-foreground font-bold tracking-widest hover:border-gold hover:text-gold transition-all uppercase text-[10px] shadow-[0_0_20px_rgba(255,255,255,0.05)] hover:shadow-[0_0_30px_rgba(255,255,255,0.15)] backdrop-blur-sm"
                 >
-                  {ad.buttonText}
+                  SHOP NOW
                 </Link>
               </div>
             </div>

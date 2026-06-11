@@ -50,17 +50,7 @@
   }
 }
 
-/* Force dark theme explicitly */
-html.dark {
-  --background: #0a0a0a !important;
-  --foreground: #faf9f6 !important;
-}
-
-/* Force light theme explicitly */
-html.light, html:not(.dark) {
-  --background: #faf9f6 !important;
-  --foreground: #0a0a0a !important;
-}
+/* Note: Tailwind native prefers-color-scheme is handling dark mode based on :root */
 
 body {
   background: var(--background);
@@ -176,8 +166,10 @@ h1, h2, h3, h4, h5, h6 {
   opacity: 1;
   pointer-events: none;
 }
-html.light .bg-perfume-main::before, html:not(.dark) .bg-perfume-main::before {
-  opacity: 0;
+@media (prefers-color-scheme: light) {
+  .bg-perfume-main::before {
+    opacity: 0;
+  }
 }
 
 /* Light Mode Background Layer */
@@ -196,8 +188,10 @@ html.light .bg-perfume-main::before, html:not(.dark) .bg-perfume-main::before {
   opacity: 0;
   pointer-events: none;
 }
-html.light .bg-perfume-main::after, html:not(.dark) .bg-perfume-main::after {
-  opacity: 1;
+@media (prefers-color-scheme: light) {
+  .bg-perfume-main::after {
+    opacity: 1;
+  }
 }
 
 /* 2. Text Gradients */
@@ -212,11 +206,13 @@ html.light .bg-perfume-main::after, html:not(.dark) .bg-perfume-main::after {
   margin-bottom: -0.15em;
 }
 
-html:not(.dark) .text-gradient-gold {
-  background-image: linear-gradient(to right, #000000, #888888, #000000, #000000);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+@media (prefers-color-scheme: light) {
+  .text-gradient-gold {
+    background-image: linear-gradient(to right, #000000, #888888, #000000, #000000);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 }
 
 /* 3. Reverted Unified Box Style (Gradient Background only) */
@@ -238,21 +234,23 @@ html:not(.dark) .text-gradient-gold {
   transform: translateY(-4px);
 }
 
-html:not(.dark) .lux-glass-card {
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(255, 255, 255, 0.6) 100%);
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-}
+@media (prefers-color-scheme: light) {
+  .lux-glass-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(250, 249, 246, 0.85) 100%);
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  }
 
-html:not(.dark) .lux-glass-card:hover {
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.25) 0%, rgba(255, 255, 255, 0.8) 100%);
-  border: 1px solid rgba(212, 175, 55, 0.6);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(212, 175, 55, 0.1);
-}
+  .lux-glass-card:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.95) 100%);
+    border: 1px solid rgba(212, 175, 55, 0.7);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15), inset 0 0 0 1px rgba(212, 175, 55, 0.1);
+  }
 
-/* Base lux-glass light mode variant */
-html:not(.dark) .lux-glass {
-  background: rgba(212, 175, 55, 0.1);
-  border: 1px solid rgba(212, 175, 55, 0.2);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+  /* Base lux-glass light mode variant */
+  .lux-glass {
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+  }
 }

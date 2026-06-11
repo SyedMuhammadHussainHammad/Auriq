@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, Package, ShoppingCart, Users, Settings, LogOut, Search, Bell, Store } from "lucide-react";
-import ThemeToggle from "../components/layout/ThemeToggle";
+import { useEffect, useState } from "react";
+import { adminAuthService } from "./services/adminAuthService";
 
 export default function AdminLayout({
   children,
@@ -21,6 +22,28 @@ export default function AdminLayout({
     { name: "Settings", href: "/admin/settings", icon: Settings },
   ];
 
+  const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    if (pathname === '/admin/login') {
+      setIsAuthenticated(true);
+      return;
+    }
+    const token = adminAuthService.getToken();
+    if (!token) {
+      router.push('/admin/login');
+    } else {
+      setIsAuthenticated(true);
+    }
+  }, [pathname, router]);
+
+  if (!isAuthenticated) return <div className="h-screen bg-background" />;
+
+  if (pathname === '/admin/login') {
+    return <>{children}</>;
+  }
+
   return (
     <div className="flex h-screen bg-background text-foreground font-sans overflow-hidden">
       {/* Sidebar */}
@@ -28,7 +51,7 @@ export default function AdminLayout({
         <div className="h-20 flex items-center px-8 border-b border-foreground/10">
           <Link href="/" className="text-xl font-serif font-bold tracking-widest text-gradient-gold">AURIQ ADMIN</Link>
         </div>
-        
+
         <nav className="flex-1 overflow-y-auto py-8 px-4 flex flex-col gap-2">
           {navigation.map((item) => {
             const isActive = pathname === item.href;
@@ -36,11 +59,10 @@ export default function AdminLayout({
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold tracking-wide transition-all ${
-                  isActive 
-                    ? "bg-gold/10 text-gold" 
-                    : "text-foreground/70 hover:bg-foreground/5 hover:text-foreground"
-                }`}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold tracking-wide transition-all ${isActive
+                  ? "bg-gold/10 text-gold"
+                  : "text-foreground/70 hover:bg-foreground/5 hover:text-foreground"
+                  }`}
               >
                 <item.icon className={`w-5 h-5 ${isActive ? "text-gold" : "text-foreground/50"}`} />
                 {item.name}
@@ -50,7 +72,7 @@ export default function AdminLayout({
         </nav>
 
         <div className="p-4 border-t border-foreground/10">
-          <button className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold tracking-wide text-red-500/80 hover:bg-red-500/10 hover:text-red-500 transition-all w-full">
+          <button onClick={() => adminAuthService.logout()} className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold tracking-wide text-red-500/80 hover:bg-red-500/10 hover:text-red-500 transition-all w-full">
             <LogOut className="w-5 h-5" />
             Sign Out
           </button>
@@ -63,9 +85,9 @@ export default function AdminLayout({
         <header className="h-20 border-b border-foreground/10 bg-background/50 backdrop-blur-xl flex items-center justify-between px-8 z-10">
           <div className="flex items-center gap-4 flex-1">
             <div className="relative w-full max-w-md hidden md:block">
-              <input 
-                type="text" 
-                placeholder="Search..." 
+              <input
+                type="text"
+                placeholder="Search..."
                 className="w-full bg-transparent border border-foreground/20 rounded-lg py-2 pl-10 pr-4 focus:outline-none focus:border-gold transition-colors text-sm font-medium"
               />
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/50" />
@@ -76,7 +98,6 @@ export default function AdminLayout({
               <Bell className="w-5 h-5" />
               <span className="absolute -top-1 -right-1 w-2 h-2 bg-gold rounded-full"></span>
             </button>
-            <ThemeToggle />
             <div className="w-8 h-8 rounded-full bg-gold/20 border border-gold/50 flex items-center justify-center text-xs font-bold text-gold">
               A
             </div>

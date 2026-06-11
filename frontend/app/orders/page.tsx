@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
-import { Package, ChevronRight, Download, Eye } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { Package, ChevronRight, Download, Eye, Sparkles } from "lucide-react";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 
@@ -43,6 +46,9 @@ const pastOrders = [
 ];
 
 export default function OrdersPage() {
+  const searchParams = useSearchParams();
+  const addedLoyalty = searchParams.get('loyalty') === 'true';
+
   return (
     <>
       <Header />
@@ -51,6 +57,15 @@ export default function OrdersPage() {
         <div className="absolute inset-0 bg-noise opacity-30 pointer-events-none z-0"></div>
 
         <div className="relative z-10 container-lux pt-20 md:pt-28 max-w-5xl">
+          
+          {addedLoyalty && (
+            <div className="mb-8 bg-gold/10 border border-gold/30 p-4 flex items-center justify-center gap-3 rounded-lg animate-in fade-in zoom-in duration-500">
+              <Sparkles className="w-5 h-5 text-gold" />
+              <p className="text-sm font-bold tracking-widest text-gold uppercase">Order Successful! +150 Loyalty Points Added to your account.</p>
+              <Sparkles className="w-5 h-5 text-gold" />
+            </div>
+          )}
+
           {/* Breadcrumbs */}
           <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-foreground/50 mb-12 font-bold">
             <Link href="/account" className="hover:text-gold transition-colors">Account</Link>
@@ -88,11 +103,11 @@ export default function OrdersPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3 mt-4 md:mt-0">
-                    <button className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-foreground hover:text-gold transition-colors">
+                    <button onClick={() => alert("Detailed order view will be available after backend integration.")} className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-foreground hover:text-gold transition-colors">
                       <Eye className="w-4 h-4" /> View Details
                     </button>
                     <span className="text-foreground/20">|</span>
-                    <button className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-foreground hover:text-gold transition-colors">
+                    <button onClick={() => alert("Invoice generation requires the backend database. Coming soon!")} className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-foreground hover:text-gold transition-colors">
                       <Download className="w-4 h-4" /> Invoice
                     </button>
                   </div>
@@ -121,7 +136,7 @@ export default function OrdersPage() {
                           <span className="text-sm text-foreground/80 font-medium">Qty: {item.qty}</span>
                         </div>
                         <div className="hidden md:block">
-                          <button className="bg-transparent border border-foreground/20 text-foreground py-2 px-6 text-[10px] font-bold tracking-widest hover:border-gold hover:text-gold transition-colors uppercase whitespace-nowrap">
+                          <button onClick={() => alert("Adding previous items to cart will work once backend is linked!")} className="bg-transparent border border-foreground/20 text-foreground py-2 px-6 text-[10px] font-bold tracking-widest hover:border-gold hover:text-gold transition-colors uppercase whitespace-nowrap">
                             Buy Again
                           </button>
                         </div>
@@ -131,7 +146,7 @@ export default function OrdersPage() {
                   
                   {/* Mobile Buy Again */}
                   <div className="mt-6 md:hidden">
-                    <button className="w-full bg-transparent border border-foreground/20 text-foreground py-3 text-xs font-bold tracking-widest hover:border-gold hover:text-gold transition-colors uppercase">
+                    <button onClick={() => alert("Adding previous items to cart will work once backend is linked!")} className="w-full bg-transparent border border-foreground/20 text-foreground py-3 text-xs font-bold tracking-widest hover:border-gold hover:text-gold transition-colors uppercase">
                       Buy Again
                     </button>
                   </div>
