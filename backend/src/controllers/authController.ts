@@ -162,7 +162,7 @@ export const googleLogin = async (req: Request, res: Response) => {
     }
 
     // Verify token and get user info from Google
-    const { data: payload } = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+    const { data: payload } = await axios.get<{ email: string; name: string }>('https://www.googleapis.com/oauth2/v3/userinfo', {
       headers: { Authorization: `Bearer ${token}` }
     });
 
@@ -217,7 +217,7 @@ export const facebookLogin = async (req: Request, res: Response) => {
       return;
     }
 
-    const { data } = await axios.get(`https://graph.facebook.com/me?fields=id,name,email,picture&access_token=${fbAccessToken}`);
+    const { data } = await axios.get<{ email: string; name: string }>(`https://graph.facebook.com/me?fields=id,name,email,picture&access_token=${fbAccessToken}`);
     if (!data || !data.email) {
       res.status(400).json({ success: false, message: 'Invalid Facebook token or missing email. Ensure email permission is granted.' });
       return;

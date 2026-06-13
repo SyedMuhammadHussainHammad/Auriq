@@ -55,7 +55,7 @@ export const verifyUser = (req: UserAuthRequest, res: Response, next: NextFuncti
     const decoded = jwt.verify(token, ENV.JWT_ACCESS_SECRET) as any;
 
     req.user = {
-      id: decoded.id,
+      id: decoded.userId,
       email: decoded.email
     };
     
@@ -72,7 +72,7 @@ export const optionalUser = (req: UserAuthRequest, res: Response, next: NextFunc
       const token = authHeader.split(' ')[1];
       const decoded = jwt.verify(token, ENV.JWT_ACCESS_SECRET) as any;
       req.user = {
-        id: decoded.id,
+        id: decoded.userId,
         email: decoded.email
       };
     }
