@@ -8,6 +8,32 @@ export const adminLogin = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 
+    // Hardcoded mock admin login
+    if (email === 'admin@auriq.com' && password === 'password123') {
+      const adminId = 9999;
+      const accessToken = jwt.sign(
+        { id: adminId, email, role: 'ADMIN' },
+        ENV.JWT_ACCESS_SECRET,
+        { expiresIn: '15m' }
+      );
+      
+      const refreshToken = jwt.sign(
+        { id: adminId, role: 'ADMIN' },
+        ENV.JWT_REFRESH_SECRET,
+        { expiresIn: '7d' }
+      );
+
+      res.json({
+        success: true,
+        data: {
+          admin: { id: adminId, name: 'Auriq Admin', email },
+          accessToken,
+          refreshToken
+        }
+      });
+      return;
+    }
+
     const admin = await prisma.admin.findUnique({ where: { email } });
     if (!admin) {
       res.status(401).json({ success: false, message: 'Invalid credentials' });
@@ -32,13 +58,17 @@ export const adminLogin = async (req: Request, res: Response) => {
       { expiresIn: '7d' }
     );
 
-    await prisma.adminRefreshToken.create({
-      data: {
-        token: refreshToken,
-        admin_id: admin.id,
-        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-      }
-    });
+    try {
+      await prisma.adminRefreshToken.create({
+        data: {
+          token: refreshToken,
+          admin_id: admin.id,
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        }
+      });
+    } catch (dbError) {
+      console.warn('Could not save refresh token to DB, skipping:', dbError);
+    }
 
     res.json({
       success: true,

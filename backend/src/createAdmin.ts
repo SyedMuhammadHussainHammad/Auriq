@@ -1,0 +1,28 @@
+import bcrypt from 'bcrypt';
+import prisma from './config/database';
+
+async function createAdmin() {
+  const email = 'admin@auriq.com';
+  const password = 'password123';
+  
+  const existing = await prisma.admin.findUnique({ where: { email } });
+  if (existing) {
+    console.log(`Admin ${email} already exists.`);
+    return;
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+  await prisma.admin.create({
+    data: {
+      name: 'Auriq Admin',
+      email,
+      password: hashedPassword
+    }
+  });
+
+  console.log(`Created admin: ${email} with password: ${password}`);
+}
+
+createAdmin()
+  .catch(e => console.error(e))
+  .finally(() => prisma.$disconnect());
