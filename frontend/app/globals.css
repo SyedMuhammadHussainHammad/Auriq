@@ -39,8 +39,8 @@
   --color-charcoal: var(--charcoal);
   --color-gold: var(--gold);
   
-  --font-sans: var(--font-inter), sans-serif;
-  --font-serif: var(--font-playfair), serif;
+  --font-sans: var(--font-jakarta), sans-serif;
+  --font-serif: var(--font-bodoni), serif;
 }
 
 @media (prefers-color-scheme: dark) {

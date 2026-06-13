@@ -12,6 +12,7 @@ import userRoutes from './routes/userRoutes'
 import wishlistRoutes from './routes/wishlistRoutes'
 import cartRoutes from './routes/cartRoutes'
 import orderRoutes from './routes/orderRoutes'
+import reviewRoutes from './routes/reviewRoutes'
 
 dotenv.config()
 
@@ -32,6 +33,7 @@ app.use('/api/user', userRoutes)
 app.use('/api/wishlist', wishlistRoutes)
 app.use('/api/cart', cartRoutes)
 app.use('/api/orders', orderRoutes)
+app.use('/api/reviews', reviewRoutes)
 
 // Health check
 app.get('/', (req, res) => {
