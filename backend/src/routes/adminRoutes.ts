@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import { upload } from '../middleware/uploadMiddleware';
 import { adminLogin } from '../controllers/adminAuthController';
-import { createProduct, getAllProducts } from '../controllers/adminProductController';
+import { createProduct, getAllProducts, updateProduct, deleteProduct, deleteProductImage } from '../controllers/adminProductController';
 import { createCategory, updateCategory } from '../controllers/adminCategoryController';
 import { createAd, getAllAds } from '../controllers/adminAdController';
-import { getAllOrders, updateOrderStatus } from '../controllers/adminOrderController';
+import { getAllOrders, updateOrderStatus, getDashboardStats } from '../controllers/adminOrderController';
 import { getAllDiscounts, createDiscount, updateDiscount, deleteDiscount } from '../controllers/adminDiscountController';
 import { verifyAdmin } from '../middleware/authMiddleware';
 
@@ -16,9 +16,14 @@ router.post('/login', adminLogin);
 // Protected Admin Routes
 router.use(verifyAdmin);
 
+router.get('/dashboard', getDashboardStats);
+
 // Products
 router.get('/products', getAllProducts);
 router.post('/products', upload.array('images', 5), createProduct);
+router.put('/products/:id', upload.array('images', 5), updateProduct);
+router.delete('/products/:id', deleteProduct);
+router.delete('/products/images/:imageId', deleteProductImage);
 
 // Categories
 router.post('/categories', createCategory);

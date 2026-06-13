@@ -79,3 +79,42 @@ export const getProductById = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: 'Server error' })
   }
 }
+
+// GET /api/products/search?q=keyword
+export const searchProducts = async (req: Request, res: Response) => {
+  try {
+    const q = req.query.q as string
+
+    if (!q) {
+      res.status(400).json({ success: false, message: 'Search query required' })
+      return
+    }
+
+    const products = await prisma.product.findMany({
+      where: {
+        is_active: true,
+        OR: [
+          { name: { contains: q, mode: 'insensitive' } },
+          { brand: { contains: q, mode: 'insensitive' } },
+          { fragrance_type: { contains: q, mode: 'insensitive' } },
+          { description: { contains: q, mode: 'insensitive' } },
+        ]
+      },
+      take: 8,
+      include: {
+        images: { where: { is_primary: true }, take: 1 },
+        variants: {
+          where: { is_active: true },
+          orderBy: { price: 'asc' },
+          take: 1,
+          select: { price: true, discount_price: true, size_ml: true }
+        }
+      }
+    })
+
+    res.json({ success: true, data: products })
+  } catch (error) {
+    console.error('SEARCH ERROR:', error)
+    res.status(500).json({ success: false, message: 'Server error' })
+  }
+}
