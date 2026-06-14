@@ -1,53 +1,37 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { Package, ChevronRight, Download, Eye, Sparkles } from "lucide-react";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
-
-// Dummy data for orders
-const pastOrders = [
-  {
-    id: "AUR-84729",
-    date: "June 05, 2026",
-    status: "Delivered",
-    total: "Rs. 15,000",
-    items: [
-      {
-        name: "Royal Oud",
-        size: "50ml",
-        qty: 1,
-        image: "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=2787&auto=format&fit=crop"
-      }
-    ]
-  },
-  {
-    id: "AUR-39102",
-    date: "April 12, 2026",
-    status: "Shipped",
-    total: "Rs. 32,500",
-    items: [
-      {
-        name: "Baccarat Rouge",
-        size: "100ml",
-        qty: 1,
-        image: "https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=2796&auto=format&fit=crop"
-      },
-      {
-        name: "Aventus",
-        size: "50ml",
-        qty: 1,
-        image: "https://images.unsplash.com/photo-1595425970377-c9703cc48a7e?q=80&w=2800&auto=format&fit=crop"
-      }
-    ]
-  }
-];
+import { orderService } from "../services/orderService";
 
 export default function OrdersPage() {
   const searchParams = useSearchParams();
   const addedLoyalty = searchParams.get('loyalty') === 'true';
+
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        setLoading(true);
+        const res = await orderService.getMyOrders();
+        if (res.success) {
+          setOrders(res.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch orders", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
+  }, []);
 
   return (
     <>
@@ -84,32 +68,38 @@ export default function OrdersPage() {
           </div>
 
           <div className="flex flex-col gap-8">
-            {pastOrders.map((order) => (
+            {loading ? (
+              <div className="text-gold py-12 text-center">Loading your orders...</div>
+            ) : orders.length === 0 ? (
+              <div className="text-foreground/60 py-12 text-center lux-glass-card">
+                You haven't placed any orders yet.
+              </div>
+            ) : orders.map((order) => (
               <div key={order.id} className="lux-glass-card overflow-hidden">
                 {/* Order Header */}
                 <div className="bg-foreground/5 p-6 border-b border-foreground/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-6 w-full md:w-auto">
                     <div>
                       <span className="block text-[10px] uppercase tracking-widest text-foreground/50 font-bold mb-1">Order Placed</span>
-                      <span className="text-sm text-foreground font-semibold tracking-wide">{order.date}</span>
+                      <span className="text-sm text-foreground font-semibold tracking-wide">{new Date(order.created_at).toLocaleDateString()}</span>
                     </div>
                     <div>
                       <span className="block text-[10px] uppercase tracking-widest text-foreground/50 font-bold mb-1">Total</span>
-                      <span className="text-sm text-foreground font-semibold tracking-wide">{order.total}</span>
+                      <span className="text-sm text-foreground font-semibold tracking-wide">Rs. {Number(order.total_amount).toLocaleString()}</span>
                     </div>
                     <div className="col-span-2 md:col-span-1">
                       <span className="block text-[10px] uppercase tracking-widest text-foreground/50 font-bold mb-1">Order Number</span>
-                      <span className="text-sm text-foreground font-semibold tracking-wide">{order.id}</span>
+                      <span className="text-sm text-foreground font-semibold tracking-wide">AUR-{order.id}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 mt-4 md:mt-0">
-                    <button onClick={() => alert("Detailed order view will be available after backend integration.")} className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-foreground hover:text-gold transition-colors">
+                    <button className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-foreground hover:text-gold transition-colors opacity-50 cursor-not-allowed">
                       <Eye className="w-4 h-4" /> View Details
                     </button>
                     <span className="text-foreground/20">|</span>
-                    <button onClick={() => alert("Invoice generation requires the backend database. Coming soon!")} className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-foreground hover:text-gold transition-colors">
+                    <Link href={`/invoice/${order.id}`} className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-foreground hover:text-gold transition-colors">
                       <Download className="w-4 h-4" /> Invoice
-                    </button>
+                    </Link>
                   </div>
                 </div>
 
@@ -118,25 +108,30 @@ export default function OrdersPage() {
                   <div className="flex items-center gap-3 mb-6">
                     <Package className="w-5 h-5 text-gold" />
                     <h3 className="text-lg font-serif text-foreground font-bold tracking-wide">
-                      Status: <span className="text-gold">{order.status}</span>
+                      Status: <span className="text-gold capitalize">{order.status}</span>
                     </h3>
                   </div>
 
                   <div className="flex flex-col gap-6">
-                    {order.items.map((item, index) => (
-                      <div key={index} className="flex items-center gap-6">
+                    {order.items?.map((item: any) => (
+                      <div key={item.id} className="flex items-center gap-6">
                         <div className="relative w-24 h-24 bg-background rounded overflow-hidden flex-shrink-0 border border-foreground/10">
-                          <Image src={item.image} alt={item.name} fill className="object-cover" />
+                          <Image 
+                            src={item.product?.images?.[0]?.image_url || "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=2787&auto=format&fit=crop"} 
+                            alt={item.product?.name || "Product Image"} 
+                            fill 
+                            className="object-cover" 
+                          />
                         </div>
                         <div className="flex flex-col flex-1">
-                          <Link href={`/products/${item.name.toLowerCase().replace(/ /g, '-')}`}>
-                            <span className="text-base font-bold text-foreground hover:text-gold transition-colors tracking-wide block mb-1">{item.name}</span>
+                          <Link href={`/products/${item.product?.id}`}>
+                            <span className="text-base font-bold text-foreground hover:text-gold transition-colors tracking-wide block mb-1">{item.product?.name}</span>
                           </Link>
-                          <span className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold mb-2">{item.size}</span>
-                          <span className="text-sm text-foreground/80 font-medium">Qty: {item.qty}</span>
+                          <span className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold mb-2">Rs. {Number(item.price_at_time).toLocaleString()}</span>
+                          <span className="text-sm text-foreground/80 font-medium">Qty: {item.quantity}</span>
                         </div>
                         <div className="hidden md:block">
-                          <button onClick={() => alert("Adding previous items to cart will work once backend is linked!")} className="bg-transparent border border-foreground/20 text-foreground py-2 px-6 text-[10px] font-bold tracking-widest hover:border-gold hover:text-gold transition-colors uppercase whitespace-nowrap">
+                          <button className="bg-transparent border border-foreground/20 text-foreground py-2 px-6 text-[10px] font-bold tracking-widest hover:border-gold hover:text-gold transition-colors uppercase whitespace-nowrap opacity-50 cursor-not-allowed">
                             Buy Again
                           </button>
                         </div>
@@ -146,7 +141,7 @@ export default function OrdersPage() {
                   
                   {/* Mobile Buy Again */}
                   <div className="mt-6 md:hidden">
-                    <button onClick={() => alert("Adding previous items to cart will work once backend is linked!")} className="w-full bg-transparent border border-foreground/20 text-foreground py-3 text-xs font-bold tracking-widest hover:border-gold hover:text-gold transition-colors uppercase">
+                    <button className="w-full bg-transparent border border-foreground/20 text-foreground py-3 text-xs font-bold tracking-widest hover:border-gold hover:text-gold transition-colors uppercase opacity-50 cursor-not-allowed">
                       Buy Again
                     </button>
                   </div>

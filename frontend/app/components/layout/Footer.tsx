@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import NewsletterForm from "../newsletter/NewsletterForm";
 
 export default function Footer() {
   return (
@@ -45,20 +46,7 @@ export default function Footer() {
             <p className="text-gray-400 text-sm mb-4">
               Subscribe to receive updates, access to exclusive deals, and more.
             </p>
-            <form className="flex flex-col gap-3">
-              <input
-                type="email"
-                placeholder="Enter your email address"
-                className="bg-transparent border border-gray-700 p-3 text-sm focus:outline-none focus:border-gold transition-colors text-white"
-                required
-              />
-              <button
-                type="submit"
-                className="bg-white text-black py-3 text-sm font-medium hover:bg-gold hover:text-black transition-colors"
-              >
-                SUBSCRIBE
-              </button>
-            </form>
+            <NewsletterForm />
           </div>
         </div>
 

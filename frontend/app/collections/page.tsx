@@ -4,76 +4,11 @@ import { useState, Suspense, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, ShoppingBag, Filter, ChevronDown, ChevronUp, X } from "lucide-react";
+import { Filter, ChevronDown, ChevronUp, X } from "lucide-react";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
-
-const allProducts = [
-  {
-    id: 1,
-    name: "Royal Oud",
-    brand: "Auriq",
-    price: "Rs. 15,000",
-    image: "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=2787&auto=format&fit=crop",
-    category: "Woody"
-  },
-  {
-    id: 2,
-    name: "Tuscan Leather",
-    brand: "Auriq",
-    price: "Rs. 12,800",
-    image: "https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?q=80&w=2787&auto=format&fit=crop",
-    category: "Leather"
-  },
-  {
-    id: 3,
-    name: "Baccarat Rouge",
-    brand: "Auriq",
-    price: "Rs. 18,200",
-    image: "https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=2796&auto=format&fit=crop",
-    category: "Oriental"
-  },
-  {
-    id: 4,
-    name: "Aventus",
-    brand: "Auriq",
-    price: "Rs. 14,000",
-    image: "https://images.unsplash.com/photo-1595425970377-c9703cc48a7e?q=80&w=2800&auto=format&fit=crop",
-    category: "Fresh"
-  },
-  {
-    id: 5,
-    name: "Oud Wood",
-    brand: "Auriq",
-    price: "Rs. 16,500",
-    image: "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=2787&auto=format&fit=crop",
-    category: "Woody"
-  },
-  {
-    id: 6,
-    name: "Santal 33",
-    brand: "Auriq",
-    price: "Rs. 13,500",
-    image: "https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?q=80&w=2787&auto=format&fit=crop",
-    category: "Woody"
-  },
-  {
-    id: 7,
-    name: "Lost Cherry",
-    brand: "Auriq",
-    price: "Rs. 19,000",
-    image: "https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=2796&auto=format&fit=crop",
-    category: "Fruity"
-  },
-  {
-    id: 8,
-    name: "Neroli Portofino",
-    brand: "Auriq",
-    price: "Rs. 11,500",
-    image: "https://images.unsplash.com/photo-1595425970377-c9703cc48a7e?q=80&w=2800&auto=format&fit=crop",
-    category: "Citrus"
-  }
-];
+import { productService } from "../services/productService";
+import ProductCardActions from "../components/home/ProductCardActions";
 
 function CollectionsContent() {
   const router = useRouter();
@@ -83,10 +18,30 @@ function CollectionsContent() {
   const [sortBy, setSortBy] = useState(sortQuery);
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+  
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (sortQuery) setSortBy(sortQuery);
   }, [sortQuery]);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const response = await productService.getAllProducts();
+        if (response.success) {
+          setProducts(response.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch collections", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
 
   const handleSortChange = (val: string) => {
     setSortBy(val);
@@ -104,9 +59,9 @@ function CollectionsContent() {
     }
   };
 
-  const sortedProducts = [...allProducts].sort((a, b) => {
-    const priceA = parseInt(a.price.replace(/\D/g, ''));
-    const priceB = parseInt(b.price.replace(/\D/g, ''));
+  const sortedProducts = [...products].sort((a, b) => {
+    const priceA = Number(a.variants?.[0]?.price || 0);
+    const priceB = Number(b.variants?.[0]?.price || 0);
     
     if (sortBy === 'price-low') return priceA - priceB;
     if (sortBy === 'price-high') return priceB - priceA;
@@ -347,49 +302,45 @@ function CollectionsContent() {
 
               {/* Grid - 3 columns on desktop since sidebar takes 1/4 */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-12">
-                {sortedProducts.map((product) => (
-                  <div key={product.id} className="group relative flex flex-col lux-glass-card p-5">
-                    <div className="flex flex-col h-full">
-                      <Link href={`/products/${product.id}`} className="block relative aspect-[4/5] overflow-hidden rounded-xl mb-6 bg-background z-10 shadow-2xl">
-                        <Image
-                          src={product.image}
-                          alt={product.name}
-                          fill
-                          className="object-cover opacity-90 transition-all duration-700 group-hover:scale-110 group-hover:opacity-100"
-                        />
-                        
-                        <div className="absolute top-4 right-4 flex flex-col gap-3 opacity-0 transition-opacity duration-500 group-hover:opacity-100 z-10">
-                          <button className="bg-background/60 backdrop-blur-md border border-foreground/20 text-foreground p-3 rounded-full hover:bg-gold hover:text-background hover:border-gold transition-all shadow-lg" aria-label="Add to Wishlist" onClick={(e) => e.preventDefault()}>
-                            <Heart className="w-5 h-5" />
-                          </button>
-                        </div>
-                        
-                        <div className="absolute bottom-0 left-0 w-full opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 z-10">
-                          <button className="w-full bg-gold/90 backdrop-blur-md text-background py-4 text-sm font-bold tracking-widest hover:bg-foreground transition-colors flex items-center justify-center gap-2 border-t border-foreground/20" onClick={(e) => e.preventDefault()}>
-                            <ShoppingBag className="w-5 h-5" />
-                            ADD TO CART
-                          </button>
-                        </div>
-                      </Link>
-
-                      <div className="flex flex-col text-center relative z-10 px-2">
-                        <span className="text-[10px] text-gold uppercase tracking-[0.2em] mb-3 font-bold">{product.brand}</span>
-                        <Link href={`/products/${product.id}`}>
-                          <h3 className="font-serif text-xl text-foreground mb-2 font-bold drop-shadow-md hover:text-gold transition-colors">{product.name}</h3>
+                {loading ? (
+                  <div className="col-span-full py-12 flex justify-center text-gold">Loading Collection...</div>
+                ) : sortedProducts.map((product) => {
+                  const price = product.variants?.[0]?.price || 0;
+                  const imageUrl = product.images?.[0]?.image_url || "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=2787&auto=format&fit=crop";
+                  return (
+                    <div key={product.id} className="group relative flex flex-col lux-glass-card p-5">
+                      <div className="flex flex-col h-full">
+                        <Link href={`/products/${product.id}`} className="block relative aspect-[4/5] overflow-hidden rounded-xl mb-6 bg-background z-10 shadow-2xl">
+                          <Image
+                            src={imageUrl}
+                            alt={product.name}
+                            fill
+                            className="object-cover opacity-90 transition-all duration-700 group-hover:scale-110 group-hover:opacity-100"
+                          />
+                          <ProductCardActions productId={product.id} />
                         </Link>
-                        <span className="text-foreground/80 text-sm tracking-wide font-medium">{product.price}</span>
+
+                        <div className="flex flex-col text-center relative z-10 px-2">
+                          <span className="text-[10px] text-gold uppercase tracking-[0.2em] mb-3 font-bold">{product.brand || 'Auriq'}</span>
+                          <Link href={`/products/${product.id}`}>
+                            <h3 className="font-serif text-xl text-foreground mb-2 font-bold drop-shadow-md hover:text-gold transition-colors">{product.name}</h3>
+                          </Link>
+                          <span className="text-foreground/80 text-sm tracking-wide font-medium">Rs. {Number(price).toLocaleString()}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               
               {/* Pagination */}
-              <div className="flex justify-center mt-24">
-                <button className="px-12 py-4 border border-foreground/20 text-foreground font-bold tracking-[0.2em] hover:bg-foreground hover:text-background transition-all duration-500 text-xs uppercase shadow-[0_0_20px_rgba(255,255,255,0.05)] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)]">
-                  Load More
-                </button>
-              </div>
+              {!loading && sortedProducts.length > 0 && (
+                <div className="flex justify-center mt-24">
+                  <button className="px-12 py-4 border border-foreground/20 text-foreground font-bold tracking-[0.2em] hover:bg-foreground hover:text-background transition-all duration-500 text-xs uppercase shadow-[0_0_20px_rgba(255,255,255,0.05)] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)]">
+                    Load More
+                  </button>
+                </div>
+              )}
 
             </div>
           </div>

@@ -607,3 +607,20 @@ enum MessageStatus {
   READ
   REPLIED
 }
+
+// ============================================================
+// SITE CONTENT (Our Story)
+// ============================================================
+
+model Story {
+  id          Int      @id @default(1)
+  subtitle    String   @default("The Heritage")
+  title       String   @default("Crafting The Essence Of Elegance")
+  paragraph1  String
+  paragraph2  String
+  image1_url  String
+  image2_url  String?
+  updated_at  DateTime @updatedAt
+
+  @@map("stories")
+}

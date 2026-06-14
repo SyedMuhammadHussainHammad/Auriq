@@ -3,6 +3,8 @@ import { Plus_Jakarta_Sans, Bodoni_Moda } from "next/font/google";
 import "./globals.css";
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { CartProvider } from './context/CartContext';
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
@@ -21,6 +23,27 @@ export const metadata: Metadata = {
   icons: {
     icon: "/icon.svg",
   },
+  openGraph: {
+    title: "Auriq | Essence In Motion",
+    description: "A premium fragrance experience crafted for those who appreciate elegance, sophistication, and timeless luxury.",
+    url: "https://auriqfragrances.com",
+    siteName: "Auriq",
+    images: [
+      {
+        url: "/icon.svg",
+        width: 800,
+        height: 600,
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Auriq | Essence In Motion",
+    description: "A premium fragrance experience crafted for those who appreciate elegance, sophistication, and timeless luxury.",
+    images: ["/icon.svg"],
+  },
 };
 
 export default function RootLayout({
@@ -38,6 +61,8 @@ export default function RootLayout({
         <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID'}>
           <CartProvider>
             {children}
+            <Analytics />
+            <SpeedInsights />
           </CartProvider>
         </GoogleOAuthProvider>
       </body>

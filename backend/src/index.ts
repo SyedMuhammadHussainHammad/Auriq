@@ -14,6 +14,7 @@ import cartRoutes from './routes/cartRoutes'
 import orderRoutes from './routes/orderRoutes'
 import reviewRoutes from './routes/reviewRoutes'
 import miscRoutes from './routes/miscRoutes'
+import storyRoutes from './routes/storyRoutes'
 
 dotenv.config()
 
@@ -35,6 +36,7 @@ app.use('/api/wishlist', wishlistRoutes)
 app.use('/api/cart', cartRoutes)
 app.use('/api/orders', orderRoutes)
 app.use('/api/reviews', reviewRoutes)
+app.use('/api/story', storyRoutes)
 app.use('/api', miscRoutes)
 
 // Health check

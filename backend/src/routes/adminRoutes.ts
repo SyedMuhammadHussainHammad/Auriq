@@ -43,4 +43,8 @@ router.post('/discounts', createDiscount);
 router.put('/discounts/:id', updateDiscount);
 router.delete('/discounts/:id', deleteDiscount);
 
+// Story (CMS)
+import { updateStory } from '../controllers/storyController';
+router.put('/story', upload.fields([{ name: 'image1', maxCount: 1 }, { name: 'image2', maxCount: 1 }]), updateStory);
+
 export default router;

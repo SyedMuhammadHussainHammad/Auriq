@@ -1,23 +1,57 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, Store, CheckCircle, Clock, Image as ImageIcon, LayoutTemplate, Star, LayoutGrid, Save, Eye, EyeOff } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Plus, Edit, Trash2, Store, CheckCircle, Clock, Image as ImageIcon, LayoutTemplate, Star, LayoutGrid, Save, Eye, EyeOff, FileText } from "lucide-react";
 import Image from "next/image";
 import Modal from "../../components/ui/Modal";
+import { adminStoryService } from "../services/adminStoryService";
+import { storyService } from "../../services/storyService";
 
 export default function AdminStorefront() {
-  const [activeTab, setActiveTab] = useState<'carousel' | 'promo' | 'featured' | 'bestsellers'>('carousel');
+  const [activeTab, setActiveTab] = useState<'carousel' | 'promo' | 'featured' | 'bestsellers' | 'story'>('carousel');
   const [isSlideModalOpen, setIsSlideModalOpen] = useState(false);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [showCarousel, setShowCarousel] = useState(true);
 
+  // Story State
+  const [storyData, setStoryData] = useState({
+    subtitle: '',
+    title: '',
+    paragraph1: '',
+    paragraph2: '',
+    image1_url: '',
+    image2_url: ''
+  });
+  const [storyImage1, setStoryImage1] = useState<File | null>(null);
+  const [storyImage2, setStoryImage2] = useState<File | null>(null);
+
   useEffect(() => {
     const saved = localStorage.getItem("auriq_show_carousel");
     if (saved !== null) {
       setShowCarousel(saved === "true");
     }
+
+    // Fetch existing story
+    const fetchStory = async () => {
+      try {
+        const res = await storyService.getStory();
+        if (res.success && res.data) {
+          setStoryData({
+            subtitle: res.data.subtitle || '',
+            title: res.data.title || '',
+            paragraph1: res.data.paragraph1 || '',
+            paragraph2: res.data.paragraph2 || '',
+            image1_url: res.data.image1_url || '',
+            image2_url: res.data.image2_url || ''
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch story", err);
+      }
+    };
+    fetchStory();
   }, []);
 
   const handlePublish = () => {
@@ -28,6 +62,33 @@ export default function AdminStorefront() {
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     }, 1500);
+  };
+
+  const handleStorySave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    const formData = new FormData();
+    formData.append('subtitle', storyData.subtitle);
+    formData.append('title', storyData.title);
+    formData.append('paragraph1', storyData.paragraph1);
+    formData.append('paragraph2', storyData.paragraph2);
+    if (storyImage1) formData.append('image1', storyImage1);
+    if (storyImage2) formData.append('image2', storyImage2);
+
+    try {
+      const res = await adminStoryService.updateStory(formData);
+      if (res.success) {
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 3000);
+      } else {
+        alert(res.message || "Failed to update story.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error saving story.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const ads = [
@@ -62,11 +123,12 @@ export default function AdminStorefront() {
           <p className="text-sm text-foreground/60 font-medium tracking-wide">Customize your homepage layout, banners, and featured products.</p>
         </div>
         <button 
-          onClick={handlePublish}
-          disabled={isSaving}
-          className="bg-gold/90 text-background px-6 py-3 rounded-lg text-sm font-bold tracking-widest hover:bg-gold transition-colors uppercase flex items-center justify-center gap-2 shadow-lg shadow-gold/20 disabled:opacity-70"
+          onClick={activeTab === 'story' ? undefined : handlePublish}
+          disabled={isSaving || activeTab === 'story'} // Story has its own save button
+          className={`px-6 py-3 rounded-lg text-sm font-bold tracking-widest transition-colors uppercase flex items-center justify-center gap-2 shadow-lg 
+            ${activeTab === 'story' ? 'bg-foreground/10 text-foreground/50 shadow-none cursor-not-allowed' : 'bg-gold/90 text-background hover:bg-gold shadow-gold/20'}`}
         >
-          {isSaving ? "Publishing..." : saveSuccess ? "Published!" : <><Save className="w-4 h-4" /> Publish Changes</>}
+          {isSaving && activeTab !== 'story' ? "Publishing..." : saveSuccess && activeTab !== 'story' ? "Published!" : <><Save className="w-4 h-4" /> Publish Layout</>}
         </button>
       </div>
 
@@ -98,6 +160,13 @@ export default function AdminStorefront() {
               className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold tracking-wide whitespace-nowrap transition-all ${activeTab === 'bestsellers' ? 'bg-gold/10 text-gold' : 'text-foreground/70 hover:bg-foreground/5 hover:text-foreground'}`}
             >
               <Star className="w-4 h-4" /> Best Sellers
+            </button>
+            <div className="my-2 border-b border-foreground/10"></div>
+            <button 
+              onClick={() => setActiveTab('story')}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold tracking-wide whitespace-nowrap transition-all ${activeTab === 'story' ? 'bg-gold/10 text-gold' : 'text-foreground/70 hover:bg-foreground/5 hover:text-foreground'}`}
+            >
+              <FileText className="w-4 h-4" /> Our Story
             </button>
           </nav>
         </div>
@@ -287,6 +356,140 @@ export default function AdminStorefront() {
                 </button>
               </div>
             </div>
+          )}
+
+          {/* OUR STORY EDITOR */}
+          {activeTab === 'story' && (
+            <form onSubmit={handleStorySave} className="flex flex-col gap-8">
+              <div className="flex justify-between items-center border-b border-foreground/10 pb-4">
+                <div>
+                  <h2 className="text-xl font-serif font-bold text-foreground mb-1">Our Story Section</h2>
+                  <p className="text-xs text-foreground/50 uppercase tracking-widest font-bold">Edit the narrative and imagery on the homepage.</p>
+                </div>
+                <button 
+                  type="submit"
+                  disabled={isSaving}
+                  className="bg-gold/90 text-background px-6 py-3 rounded-lg text-sm font-bold tracking-widest hover:bg-gold transition-colors uppercase flex items-center justify-center gap-2 shadow-lg shadow-gold/20 disabled:opacity-70"
+                >
+                  {isSaving ? "Saving..." : saveSuccess ? "Saved!" : <><Save className="w-4 h-4" /> Save Story</>}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Text Content */}
+                <div className="flex flex-col gap-6 bg-foreground/[0.02] p-6 rounded-xl border border-foreground/10">
+                  <h3 className="text-sm font-bold tracking-widest uppercase text-gold">Text Content</h3>
+                  
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Subtitle / Kicker</label>
+                    <input 
+                      type="text" 
+                      value={storyData.subtitle} 
+                      onChange={(e) => setStoryData({...storyData, subtitle: e.target.value})}
+                      className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-gold w-full" 
+                      required
+                    />
+                  </div>
+                  
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Main Heading</label>
+                    <input 
+                      type="text" 
+                      value={storyData.title} 
+                      onChange={(e) => setStoryData({...storyData, title: e.target.value})}
+                      className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-gold w-full" 
+                      required
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Paragraph 1</label>
+                    <textarea 
+                      value={storyData.paragraph1} 
+                      onChange={(e) => setStoryData({...storyData, paragraph1: e.target.value})}
+                      className="bg-transparent border border-foreground/20 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-gold w-full min-h-[100px] resize-y" 
+                      required
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Paragraph 2</label>
+                    <textarea 
+                      value={storyData.paragraph2} 
+                      onChange={(e) => setStoryData({...storyData, paragraph2: e.target.value})}
+                      className="bg-transparent border border-foreground/20 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-gold w-full min-h-[100px] resize-y" 
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Imagery */}
+                <div className="flex flex-col gap-6 bg-foreground/[0.02] p-6 rounded-xl border border-foreground/10">
+                  <h3 className="text-sm font-bold tracking-widest uppercase text-gold">Imagery</h3>
+                  
+                  {/* Image 1 */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold flex justify-between">
+                      <span>Primary Image (Left)</span>
+                      <span className="text-gold">Required</span>
+                    </label>
+                    <div className="flex items-center gap-4">
+                      {storyData.image1_url && !storyImage1 && (
+                        <div className="relative w-16 h-16 rounded overflow-hidden flex-shrink-0 border border-foreground/20">
+                          <Image src={storyData.image1_url} alt="Image 1" fill className="object-cover" />
+                        </div>
+                      )}
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            setStoryImage1(e.target.files[0]);
+                          }
+                        }}
+                        className="text-sm text-foreground/70 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:uppercase file:tracking-widest file:bg-foreground/10 file:text-foreground hover:file:bg-foreground/20 transition-all cursor-pointer w-full"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="w-full h-[1px] bg-foreground/10 my-2"></div>
+
+                  {/* Image 2 */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold flex justify-between">
+                      <span>Secondary Image (Right Overlay)</span>
+                      <span className="text-foreground/40">Optional</span>
+                    </label>
+                    <div className="flex items-center gap-4">
+                      {storyData.image2_url && !storyImage2 && (
+                        <div className="relative w-16 h-16 rounded overflow-hidden flex-shrink-0 border border-foreground/20">
+                          <Image src={storyData.image2_url} alt="Image 2" fill className="object-cover" />
+                        </div>
+                      )}
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            setStoryImage2(e.target.files[0]);
+                          }
+                        }}
+                        className="text-sm text-foreground/70 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:uppercase file:tracking-widest file:bg-foreground/10 file:text-foreground hover:file:bg-foreground/20 transition-all cursor-pointer w-full"
+                      />
+                    </div>
+                    {storyData.image2_url && (
+                      <button 
+                        type="button" 
+                        onClick={() => setStoryData({...storyData, image2_url: ''})}
+                        className="text-xs text-red-500 font-bold uppercase tracking-widest mt-1 text-left hover:underline"
+                      >
+                        Remove Secondary Image
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </form>
           )}
 
         </div>
