@@ -49,14 +49,19 @@ model User {
 // ============================================================
 
 model Admin {
-  id         Int      @id @default(autoincrement())
-  name       String
-  email      String   @unique
-  password   String
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  id                Int      @id @default(autoincrement())
+  first_name        String   @default("Auriq")
+  last_name         String   @default("Admin")
+  email             String   @unique
+  password          String
+  phone             String?
+  profile_image_url String?  // Cloudinary URL
+  last_login        DateTime?
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
 
   refresh_tokens AdminRefreshToken[]
+  audit_logs     AuditLog[]
 
   @@map("admins")
 }
@@ -81,6 +86,10 @@ model AdminRefreshToken {
   token      String   @unique
   admin_id   Int
   admin      Admin    @relation(fields: [admin_id], references: [id], onDelete: Cascade)
+  device_info String?
+  browser    String?
+  ip_address String?
+  last_active DateTime @default(now())
   expires_at DateTime
   created_at DateTime @default(now())
 
@@ -550,16 +559,19 @@ model ShippingConfig {
 // ============================================================
 
 model Ad {
-  id          Int        @id @default(autoincrement())
-  title       String
-  image_url   String     // Cloudinary URL
-  link_url    String?
-  position    AdPosition @default(HERO)
-  is_active   Boolean    @default(true)
-  starts_at   DateTime?
-  ends_at     DateTime?
-  created_at  DateTime   @default(now())
-  updated_at  DateTime   @updatedAt
+  id               Int        @id @default(autoincrement())
+  title            String
+  image_url        String     // Cloudinary URL
+  mobile_image_url String?    // Optional mobile-specific image
+  link_url         String?
+  button_text      String?    // Call to action text
+  position         AdPosition @default(HERO)
+  is_active        Boolean    @default(true)
+  sort_order       Int        @default(0) // For drag-and-drop ordering
+  starts_at        DateTime?
+  ends_at          DateTime?
+  created_at       DateTime   @default(now())
+  updated_at       DateTime   @updatedAt
 
   @@map("ads")
 }
@@ -606,6 +618,7 @@ enum MessageStatus {
   UNREAD
   READ
   REPLIED
+  ARCHIVED
 }
 
 // ============================================================
@@ -613,14 +626,71 @@ enum MessageStatus {
 // ============================================================
 
 model Story {
-  id          Int      @id @default(1)
-  subtitle    String   @default("The Heritage")
-  title       String   @default("Crafting The Essence Of Elegance")
-  paragraph1  String
-  paragraph2  String
-  image1_url  String
-  image2_url  String?
-  updated_at  DateTime @updatedAt
+  id                    Int      @id @default(1)
+  subtitle              String   @default("The Heritage")
+  title                 String   @default("Crafting The Essence Of Elegance")
+  paragraph1            String
+  paragraph2            String
+  image1_url            String
+  image2_url            String?
+  mission_statement     String?  @db.Text
+  vision_statement      String?  @db.Text
+  sourcing_details      String?  @db.Text
+  manufacturing_process String?  @db.Text
+  company_values        String?  @db.Text
+  founder_message       String?  @db.Text
+  video_url             String?
+  updated_at            DateTime @updatedAt
 
   @@map("stories")
 }
+
+// ============================================================
+// CMS SYSTEM SETTINGS
+// ============================================================
+
+model SystemSetting {
+  id          Int      @id @default(autoincrement())
+  key         String   @unique
+  value       String   @db.Text
+  group       String   @default("GENERAL") // e.g., 'SEO', 'CONTACT', 'FOOTER', 'HOMEPAGE'
+  updated_at  DateTime @updatedAt
+
+  @@map("system_settings")
+}
+
+// ============================================================
+// TESTIMONIALS
+// ============================================================
+
+model Testimonial {
+  id            Int      @id @default(autoincrement())
+  customer_name String
+  content       String   @db.Text
+  rating        Int      @default(5)
+  is_featured   Boolean  @default(false)
+  is_approved   Boolean  @default(false)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  @@map("testimonials")
+}
+
+// ============================================================
+// AUDIT LOGS
+// ============================================================
+
+model AuditLog {
+  id             Int      @id @default(autoincrement())
+  admin_id       Int
+  admin          Admin    @relation(fields: [admin_id], references: [id])
+  action         String
+  entity_type    String
+  entity_id      Int?
+  previous_value String?  @db.Text
+  new_value      String?  @db.Text
+  created_at     DateTime @default(now())
+
+  @@map("audit_logs")
+}
+

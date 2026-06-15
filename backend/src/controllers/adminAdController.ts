@@ -1,21 +1,8 @@
 import { Request, Response } from 'express';
 import prisma from '../config/database';
-import cloudinary from '../config/cloudinary';
+import { uploadToCloudinary } from '../utils/cloudinary';
 import axios from 'axios';
 import { ENV } from '../config/env';
-
-const uploadToCloudinary = (buffer: Buffer): Promise<any> => {
-  return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      { folder: 'auriq_ads' },
-      (error, result) => {
-        if (result) resolve(result);
-        else reject(error);
-      }
-    );
-    uploadStream.end(buffer);
-  });
-};
 
 const revalidateFrontend = async (tag: string) => {
   try {
@@ -30,23 +17,43 @@ const revalidateFrontend = async (tag: string) => {
 
 export const createAd = async (req: Request, res: Response) => {
   try {
-    const { title, link_url, position, is_active } = req.body;
-    const file = req.file as Express.Multer.File;
+    const { title, link_url, position, is_active, button_text, sort_order, starts_at, ends_at } = req.body;
+    
+    // Using upload.fields() means req.files is a dictionary
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
+    
+    const imageFile = files?.['image']?.[0];
+    const mobileImageFile = files?.['mobile_image']?.[0];
 
-    if (!file) {
-      res.status(400).json({ success: false, message: 'Image is required' });
+    if (!imageFile && position !== 'ANNOUNCEMENT_BAR') {
+      res.status(400).json({ success: false, message: 'Image is required for Hero ads' });
       return;
     }
 
-    const uploadResult = await uploadToCloudinary(file.buffer);
+    let secure_url = "";
+    if (imageFile) {
+      const uploadResult = await uploadToCloudinary(imageFile.buffer, 'auriq_ads');
+      secure_url = uploadResult.secure_url;
+    }
+
+    let mobile_secure_url = null;
+    if (mobileImageFile) {
+      const uploadResult = await uploadToCloudinary(mobileImageFile.buffer, 'auriq_ads');
+      mobile_secure_url = uploadResult.secure_url;
+    }
 
     const ad = await prisma.ad.create({
       data: {
         title,
-        link_url,
+        link_url: link_url || null,
         position,
-        is_active: is_active === 'true',
-        image_url: uploadResult.secure_url
+        is_active: is_active === 'true' || is_active === true,
+        image_url: secure_url,
+        mobile_image_url: mobile_secure_url,
+        button_text: button_text || null,
+        sort_order: sort_order ? parseInt(sort_order) : 0,
+        starts_at: starts_at ? new Date(starts_at) : null,
+        ends_at: ends_at ? new Date(ends_at) : null,
       }
     });
 
@@ -67,6 +74,34 @@ export const getAllAds = async (req: Request, res: Response) => {
     res.json({ success: true, data: ads });
   } catch (error) {
     console.error('GET ALL ADS ERROR:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+export const deleteAd = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    await prisma.ad.delete({ where: { id: parseInt(id as string) } });
+    await revalidateFrontend('ads');
+    res.json({ success: true, message: 'Ad deleted' });
+  } catch (error) {
+    console.error('DELETE AD ERROR:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+export const toggleAdStatus = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { is_active } = req.body;
+    const ad = await prisma.ad.update({
+      where: { id: parseInt(id as string) },
+      data: { is_active: is_active === 'true' || is_active === true }
+    });
+    await revalidateFrontend('ads');
+    res.json({ success: true, data: ad });
+  } catch (error) {
+    console.error('TOGGLE AD ERROR:', error);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };

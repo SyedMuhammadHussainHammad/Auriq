@@ -1,8 +1,21 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { uploadToCloudinary } from '../utils/cloudinary';
+import axios from 'axios';
+import { ENV } from '../config/env';
 
 const prisma = new PrismaClient();
+
+const revalidateFrontend = async (tag: string) => {
+  try {
+    await axios.post('http://localhost:3000/api/revalidate', {
+      tag,
+      secret: ENV.REVALIDATION_SECRET
+    });
+  } catch (error) {
+    console.error('Failed to revalidate frontend cache:', error);
+  }
+};
 
 export const getStory = async (req: Request, res: Response) => {
   try {
@@ -34,7 +47,11 @@ export const getStory = async (req: Request, res: Response) => {
 
 export const updateStory = async (req: Request, res: Response) => {
   try {
-    const { subtitle, title, paragraph1, paragraph2 } = req.body;
+    const { 
+      subtitle, title, paragraph1, paragraph2,
+      mission_statement, vision_statement, sourcing_details,
+      manufacturing_process, company_values, founder_message, video_url
+    } = req.body;
     
     // Existing story to get old images if new ones aren't uploaded
     const existingStory = await prisma.story.findUnique({ where: { id: 1 } });
@@ -43,37 +60,40 @@ export const updateStory = async (req: Request, res: Response) => {
     let image2_url = existingStory?.image2_url || null;
 
     // Handle uploaded images
-    if (req.files && Array.isArray(req.files)) {
-      for (const file of req.files as Express.Multer.File[]) {
-        const url = await uploadToCloudinary(file.buffer);
-        // We use fieldname or order to determine which image is which, but with multer .array() we just get an array.
-        // Let's assume the client sends them as separate fields for clarity, or we just replace them in order.
-        // Actually, let's use upload.fields([{name: 'image1', maxCount: 1}, {name: 'image2', maxCount: 1}]) in route.
-        if (file.fieldname === 'image1') image1_url = url;
-        if (file.fieldname === 'image2') image2_url = url;
-      }
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
+    
+    const image1File = files?.['image1']?.[0];
+    const image2File = files?.['image2']?.[0];
+
+    if (image1File) {
+      const result = await uploadToCloudinary(image1File.buffer, 'auriq_story');
+      image1_url = result.secure_url;
     }
+
+    if (image2File) {
+      const result = await uploadToCloudinary(image2File.buffer, 'auriq_story');
+      image2_url = result.secure_url;
+    }
+
+    const storyData = {
+      subtitle, title, paragraph1, paragraph2,
+      image1_url, image2_url,
+      mission_statement: mission_statement || null,
+      vision_statement: vision_statement || null,
+      sourcing_details: sourcing_details || null,
+      manufacturing_process: manufacturing_process || null,
+      company_values: company_values || null,
+      founder_message: founder_message || null,
+      video_url: video_url || null,
+    };
 
     const story = await prisma.story.upsert({
       where: { id: 1 },
-      update: {
-        subtitle,
-        title,
-        paragraph1,
-        paragraph2,
-        image1_url,
-        image2_url
-      },
-      create: {
-        id: 1,
-        subtitle,
-        title,
-        paragraph1,
-        paragraph2,
-        image1_url,
-        image2_url
-      }
+      update: storyData,
+      create: { id: 1, ...storyData }
     });
+
+    await revalidateFrontend('story');
 
     res.json({ success: true, data: story, message: 'Story updated successfully' });
   } catch (error) {

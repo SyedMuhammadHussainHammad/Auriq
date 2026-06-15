@@ -8,32 +8,6 @@ export const adminLogin = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 
-    // Hardcoded mock admin login
-    if (email === 'admin@auriq.com' && password === 'password123') {
-      const adminId = 9999;
-      const accessToken = jwt.sign(
-        { id: adminId, email, role: 'ADMIN' },
-        ENV.JWT_ACCESS_SECRET,
-        { expiresIn: '15m' }
-      );
-      
-      const refreshToken = jwt.sign(
-        { id: adminId, role: 'ADMIN' },
-        ENV.JWT_REFRESH_SECRET,
-        { expiresIn: '7d' }
-      );
-
-      res.json({
-        success: true,
-        data: {
-          admin: { id: adminId, name: 'Auriq Admin', email },
-          accessToken,
-          refreshToken
-        }
-      });
-      return;
-    }
-
     const admin = await prisma.admin.findUnique({ where: { email } });
     if (!admin) {
       res.status(401).json({ success: false, message: 'Invalid credentials' });
@@ -58,22 +32,47 @@ export const adminLogin = async (req: Request, res: Response) => {
       { expiresIn: '7d' }
     );
 
+    // Extract device/browser/IP info
+    const userAgent = req.headers['user-agent'] || 'Unknown Device';
+    let browser = 'Unknown Browser';
+    if (userAgent.includes('Firefox')) browser = 'Firefox';
+    else if (userAgent.includes('Chrome')) browser = 'Chrome';
+    else if (userAgent.includes('Safari')) browser = 'Safari';
+    else if (userAgent.includes('Edge')) browser = 'Edge';
+
+    const ipAddress = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'Unknown IP') as string;
+
     try {
       await prisma.adminRefreshToken.create({
         data: {
           token: refreshToken,
           admin_id: admin.id,
+          device_info: userAgent.substring(0, 255),
+          browser,
+          ip_address: ipAddress,
           expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
         }
       });
+
+      // Update last login
+      await prisma.admin.update({
+        where: { id: admin.id },
+        data: { last_login: new Date() }
+      });
     } catch (dbError) {
-      console.warn('Could not save refresh token to DB, skipping:', dbError);
+      console.warn('Could not save refresh token to DB or update last_login, skipping:', dbError);
     }
 
     res.json({
       success: true,
       data: {
-        admin: { id: admin.id, name: admin.name, email: admin.email },
+        admin: { 
+          id: admin.id, 
+          first_name: admin.first_name, 
+          last_name: admin.last_name, 
+          email: admin.email,
+          profile_image_url: admin.profile_image_url
+        },
         accessToken,
         refreshToken
       }

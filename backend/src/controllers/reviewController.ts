@@ -41,13 +41,15 @@ export const addReview = async (req: UserAuthRequest, res: Response) => {
       update: {
         rating: Number(rating),
         comment: comment || null,
+        is_active: false, // Needs re-approval if updated
         updated_at: new Date()
       },
       create: {
         user_id: userId,
         product_id: Number(product_id),
         rating: Number(rating),
-        comment: comment || null
+        comment: comment || null,
+        is_active: false // Needs admin approval by default
       }
     });
 

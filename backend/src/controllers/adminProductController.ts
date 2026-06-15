@@ -1,21 +1,8 @@
 import { Request, Response } from 'express';
 import prisma from '../config/database';
-import cloudinary from '../config/cloudinary';
+import { uploadToCloudinary } from '../utils/cloudinary';
 import axios from 'axios';
 import { ENV } from '../config/env';
-
-const uploadToCloudinary = (buffer: Buffer): Promise<any> => {
-  return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      { folder: 'auriq_products' },
-      (error, result) => {
-        if (result) resolve(result);
-        else reject(error);
-      }
-    );
-    uploadStream.end(buffer);
-  });
-};
 
 const revalidateFrontend = async (tag: string) => {
   try {
@@ -37,7 +24,7 @@ export const createProduct = async (req: Request, res: Response) => {
     let uploadedImages: string[] = [];
     if (files && files.length > 0) {
       for (const file of files) {
-        const result = await uploadToCloudinary(file.buffer);
+        const result = await uploadToCloudinary(file.buffer, 'auriq_products');
         uploadedImages.push(result.secure_url);
       }
     }
@@ -134,7 +121,7 @@ export const updateProduct = async (req: Request, res: Response) => {
     let uploadedImages: string[] = []
     if (files && files.length > 0) {
       for (const file of files) {
-        const result = await uploadToCloudinary(file.buffer)
+        const result = await uploadToCloudinary(file.buffer, 'auriq_products')
         uploadedImages.push(result.secure_url)
       }
     }

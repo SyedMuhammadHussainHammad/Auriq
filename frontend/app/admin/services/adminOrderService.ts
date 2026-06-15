@@ -1,9 +1,9 @@
-import { apiFetch } from '../../../utils/api';
+import { apiFetch } from '../../utils/api';
 
 const getHeaders = () => {
   let token = '';
   if (typeof window !== 'undefined') {
-    token = localStorage.getItem('auriqAdminToken') || '';
+    token = localStorage.getItem('adminToken') || '';
   }
   return {
     'Authorization': `Bearer ${token}`,

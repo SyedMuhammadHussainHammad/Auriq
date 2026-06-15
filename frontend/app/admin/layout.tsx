@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Package, ShoppingCart, Users, Settings, LogOut, Search, Bell, Store, Ticket } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, Users, Settings, LogOut, Search, Bell, Store, Ticket, Activity, Star, Mail } from "lucide-react";
 import { useEffect, useState } from "react";
 import { adminAuthService } from "./services/adminAuthService";
 
@@ -15,12 +15,21 @@ export default function AdminLayout({
 
   const navigation = [
     { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-    { name: "Products", href: "/admin/products", icon: Package },
+    { name: "Analytics", href: "/admin/analytics", icon: Activity },
+    { name: "Inventory", href: "/admin/inventory", icon: Package },
+    { name: "Reviews", href: "/admin/reviews", icon: Star },
+    { name: "Messages", href: "/admin/messages", icon: Mail },
+    { name: "Products", href: "/admin/products", icon: Store },
     { name: "Orders", href: "/admin/orders", icon: ShoppingCart },
     { name: "Customers", href: "/admin/customers", icon: Users },
     { name: "Coupons", href: "/admin/discounts", icon: Ticket },
-    { name: "Storefront Editor", href: "/admin/storefront", icon: Store },
-    { name: "Settings", href: "/admin/settings", icon: Settings },
+    // CMS 
+    { name: "Homepage CMS", href: "/admin/homepage", icon: Store },
+    { name: "Our Story CMS", href: "/admin/our-story", icon: Store },
+    { name: "Contact CMS", href: "/admin/contact", icon: Mail },
+    { name: "Footer CMS", href: "/admin/footer", icon: Settings },
+    { name: "SEO Settings", href: "/admin/seo", icon: Search },
+    { name: "General Settings", href: "/admin/settings", icon: Settings },
   ];
 
   const router = useRouter();

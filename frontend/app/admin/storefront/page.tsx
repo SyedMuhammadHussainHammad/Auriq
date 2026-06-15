@@ -8,7 +8,7 @@ import { adminStoryService } from "../services/adminStoryService";
 import { storyService } from "../../services/storyService";
 
 export default function AdminStorefront() {
-  const [activeTab, setActiveTab] = useState<'carousel' | 'promo' | 'featured' | 'bestsellers' | 'story'>('carousel');
+  const [activeTab, setActiveTab] = useState<'carousel' | 'announcement' | 'promo' | 'featured' | 'bestsellers' | 'story'>('carousel');
   const [isSlideModalOpen, setIsSlideModalOpen] = useState(false);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -144,6 +144,12 @@ export default function AdminStorefront() {
               <ImageIcon className="w-4 h-4" /> Hero Carousel
             </button>
             <button 
+              onClick={() => setActiveTab('announcement')}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold tracking-wide whitespace-nowrap transition-all ${activeTab === 'announcement' ? 'bg-gold/10 text-gold' : 'text-foreground/70 hover:bg-foreground/5 hover:text-foreground'}`}
+            >
+              <LayoutTemplate className="w-4 h-4" /> Announcement
+            </button>
+            <button 
               onClick={() => setActiveTab('promo')}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold tracking-wide whitespace-nowrap transition-all ${activeTab === 'promo' ? 'bg-gold/10 text-gold' : 'text-foreground/70 hover:bg-foreground/5 hover:text-foreground'}`}
             >
@@ -240,6 +246,42 @@ export default function AdminStorefront() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {/* ANNOUNCEMENT EDITOR */}
+          {activeTab === 'announcement' && (
+            <div className="flex flex-col gap-6">
+              <div className="flex justify-between items-center mb-2">
+                <div>
+                  <h2 className="text-xl font-serif font-bold text-foreground">Announcement Bar</h2>
+                  <p className="text-xs text-foreground/50 uppercase tracking-widest font-bold mt-1">Manage the top announcement bar text and links.</p>
+                </div>
+                <button 
+                  className="bg-gold text-background px-4 py-2 rounded-lg text-xs font-bold tracking-widest hover:bg-gold/90 transition-colors uppercase"
+                >
+                  Save Changes
+                </button>
+              </div>
+
+              <div className="bg-foreground/[0.02] border border-foreground/10 rounded-xl p-6">
+                <div className="flex flex-col gap-6">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Announcement Text</label>
+                    <input type="text" defaultValue="Free shipping on orders over Rs. 10,000" className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground" />
+                  </div>
+                  
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Link URL (Optional)</label>
+                    <input type="text" defaultValue="/collections/all" className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground" />
+                  </div>
+
+                  <div className="flex items-center gap-3 pt-4 border-t border-foreground/10">
+                    <input type="checkbox" defaultChecked className="accent-gold w-4 h-4" id="enable-announcement" />
+                    <label htmlFor="enable-announcement" className="text-sm font-bold text-foreground cursor-pointer">Enable Announcement Bar</label>
+                  </div>
+                </div>
               </div>
             </div>
           )}
