@@ -54,7 +54,7 @@ export default function Footer() {
         <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between text-xs text-gray-500">
           <p>&copy; {new Date().getFullYear()} Auriq. All rights reserved.</p>
           <div className="flex gap-6 mt-4 md:mt-0">
-            <Link href="#" className="hover:text-white transition-colors">Instagram</Link>
+            <Link href="https://www.instagram.com/auriqfragrances?igsh=MXByeTJybmZhNnQxbQ==" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Instagram</Link>
             <Link href="#" className="hover:text-white transition-colors">Facebook</Link>
             <Link href="#" className="hover:text-white transition-colors">Twitter</Link>
           </div>

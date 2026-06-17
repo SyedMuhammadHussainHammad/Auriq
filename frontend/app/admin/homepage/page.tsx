@@ -5,8 +5,10 @@ import { Save, AlertCircle, RefreshCw, LayoutTemplate, MessageSquareQuote, Stars
 import { adminSettingsService } from "../services/adminSettingsService";
 import { adminAdService } from "../services/adminAdService";
 import { adminTestimonialService } from "../services/adminTestimonialService";
+import { useAdminToast } from "../context/AdminToastContext";
 
 export default function HomepageCMS() {
+  const { success, error } = useAdminToast();
   const [activeTab, setActiveTab] = useState<'hero' | 'announcements' | 'banners' | 'featured' | 'bestsellers' | 'why_choose' | 'testimonials'>('hero');
   const [isSaving, setIsSaving] = useState(false);
   const [settings, setSettings] = useState<Record<string, string>>({});
@@ -41,9 +43,9 @@ export default function HomepageCMS() {
     setIsSaving(true);
     try {
       await adminSettingsService.updateSettings(settings, 'HOMEPAGE');
-      alert("Settings saved successfully!");
+      success("Settings saved successfully!");
     } catch (err) {
-      alert("Failed to save settings.");
+      error("Failed to save settings.");
     } finally {
       setIsSaving(false);
     }
@@ -203,6 +205,60 @@ export default function HomepageCMS() {
                       onChange={(e) => handleSettingChange('HERO_CTA1_LINK', e.target.value)}
                       className="w-full bg-transparent border border-foreground/20 rounded-lg px-4 py-2 focus:border-gold outline-none text-sm" 
                     />
+                  </div>
+                </div>
+
+                {/* Promotional Cards Section */}
+                <h4 className="text-md font-bold text-gold mt-8 border-t border-foreground/10 pt-6">Promotional Cards (Inside Hero)</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Promo Card 1 */}
+                  <div className="space-y-4 bg-foreground/[0.02] p-4 rounded-xl border border-foreground/5">
+                    <h5 className="font-bold text-sm">Card 1</h5>
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Tag</label>
+                      <input type="text" value={settings.PROMO1_TAG || ''} onChange={(e) => handleSettingChange('PROMO1_TAG', e.target.value)} className="w-full bg-transparent border border-foreground/20 rounded-lg px-4 py-2 focus:border-gold outline-none text-sm" placeholder="e.g. New Arrival" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Title</label>
+                      <input type="text" value={settings.PROMO1_TITLE || ''} onChange={(e) => handleSettingChange('PROMO1_TITLE', e.target.value)} className="w-full bg-transparent border border-foreground/20 rounded-lg px-4 py-2 focus:border-gold outline-none text-sm" placeholder="e.g. The Midnight Collection" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Image URL</label>
+                      <input type="text" value={settings.PROMO1_IMAGE || ''} onChange={(e) => handleSettingChange('PROMO1_IMAGE', e.target.value)} className="w-full bg-transparent border border-foreground/20 rounded-lg px-4 py-2 focus:border-gold outline-none text-sm" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Link URL</label>
+                      <input type="text" value={settings.PROMO1_LINK || ''} onChange={(e) => handleSettingChange('PROMO1_LINK', e.target.value)} className="w-full bg-transparent border border-foreground/20 rounded-lg px-4 py-2 focus:border-gold outline-none text-sm" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Button Text</label>
+                      <input type="text" value={settings.PROMO1_BTN || ''} onChange={(e) => handleSettingChange('PROMO1_BTN', e.target.value)} className="w-full bg-transparent border border-foreground/20 rounded-lg px-4 py-2 focus:border-gold outline-none text-sm" placeholder="e.g. Discover Now" />
+                    </div>
+                  </div>
+
+                  {/* Promo Card 2 */}
+                  <div className="space-y-4 bg-foreground/[0.02] p-4 rounded-xl border border-foreground/5">
+                    <h5 className="font-bold text-sm">Card 2</h5>
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Tag</label>
+                      <input type="text" value={settings.PROMO2_TAG || ''} onChange={(e) => handleSettingChange('PROMO2_TAG', e.target.value)} className="w-full bg-transparent border border-foreground/20 rounded-lg px-4 py-2 focus:border-gold outline-none text-sm" placeholder="e.g. Limited Edition" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Title</label>
+                      <input type="text" value={settings.PROMO2_TITLE || ''} onChange={(e) => handleSettingChange('PROMO2_TITLE', e.target.value)} className="w-full bg-transparent border border-foreground/20 rounded-lg px-4 py-2 focus:border-gold outline-none text-sm" placeholder="e.g. Summer Exclusives" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Image URL</label>
+                      <input type="text" value={settings.PROMO2_IMAGE || ''} onChange={(e) => handleSettingChange('PROMO2_IMAGE', e.target.value)} className="w-full bg-transparent border border-foreground/20 rounded-lg px-4 py-2 focus:border-gold outline-none text-sm" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Link URL</label>
+                      <input type="text" value={settings.PROMO2_LINK || ''} onChange={(e) => handleSettingChange('PROMO2_LINK', e.target.value)} className="w-full bg-transparent border border-foreground/20 rounded-lg px-4 py-2 focus:border-gold outline-none text-sm" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Button Text</label>
+                      <input type="text" value={settings.PROMO2_BTN || ''} onChange={(e) => handleSettingChange('PROMO2_BTN', e.target.value)} className="w-full bg-transparent border border-foreground/20 rounded-lg px-4 py-2 focus:border-gold outline-none text-sm" placeholder="e.g. Shop Sale" />
+                    </div>
                   </div>
                 </div>
               </div>

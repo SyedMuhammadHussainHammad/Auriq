@@ -16,10 +16,7 @@ export default function Hero({ ads = [] }: { ads?: any[] }) {
     });
   }, []);
 
-  // If the CMS has disabled the hero section, don't render it
-  if (isLoaded && settings.HERO_ENABLED === 'false') {
-    return null;
-  }
+  // Hero section is forced to be visible based on user request
 
   const title = settings.HERO_TITLE || "AURIQ";
   const subtitle = settings.HERO_SUBTITLE || `"Essence In Motion"`;
@@ -33,7 +30,7 @@ export default function Hero({ ads = [] }: { ads?: any[] }) {
   const bgImage = settings.HERO_BG_IMAGE || null;
 
   return (
-    <section id="hero" className="relative min-h-screen w-full flex flex-col justify-center overflow-hidden pt-20">
+    <section id="hero" className="relative min-h-screen w-full flex flex-col justify-center overflow-hidden pt-10">
       {/* Background Video/Image with Overlay */}
       <div className="absolute inset-0 z-0">
         {videoUrl ? (
@@ -81,8 +78,7 @@ export default function Hero({ ads = [] }: { ads?: any[] }) {
 
         {/* Promotional Cards Overlay */}
         <div className="w-full max-w-7xl mx-auto mt-auto pb-4 md:pb-8">
-          {/* @ts-ignore - Assuming PromotionalCards exists and accepts ads */}
-          <PromotionalCards ads={ads} className="w-full relative z-10" showNoise={false} />
+          <PromotionalCards className="w-full relative z-10" showNoise={false} />
         </div>
       </div>
     </section>

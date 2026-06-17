@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { adminAuthService } from "./services/adminAuthService";
 
 import { adminMessageService } from "./services/adminMessageService";
+import { AdminToastProvider } from "./context/AdminToastContext";
 
 export default function AdminLayout({
   children,
@@ -42,6 +43,7 @@ export default function AdminLayout({
     { type: 'link', name: "Shipping", href: "/admin/shipping", icon: Truck },
 
     { type: 'header', name: 'MARKETING' },
+    { type: 'link', name: "Banners & Ads", href: "/admin/ads", icon: Image },
     { type: 'link', name: "Newsletter", href: "/admin/newsletter", icon: Mail },
     { type: 'link', name: "Campaigns", href: "/admin/campaigns", icon: Star },
     { type: 'link', name: "Gift Sets", href: "/admin/gift-sets", icon: Gift },
@@ -88,7 +90,8 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="flex h-screen bg-background text-foreground font-sans overflow-hidden">
+    <AdminToastProvider>
+      <div className="flex h-screen bg-background text-foreground font-sans overflow-hidden">
       {/* Sidebar */}
       <aside className="w-64 border-r border-foreground/10 bg-background/50 backdrop-blur-xl flex flex-col hidden md:flex">
         <div className="h-20 flex items-center px-8 border-b border-foreground/10">
@@ -187,5 +190,6 @@ export default function AdminLayout({
         </div>
       </main>
     </div>
+    </AdminToastProvider>
   );
 }

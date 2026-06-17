@@ -5,13 +5,11 @@ import { ArrowRight } from "lucide-react";
 export default function PromotionalCards({ 
   className = "py-8 md:py-12 bg-perfume-main relative overflow-hidden",
   showNoise = true,
-  ads = []
 }: { 
   className?: string;
   showNoise?: boolean;
-  ads?: any[];
 }) {
-  const displayAds = ads && ads.length >= 2 ? ads.slice(0, 2) : [
+  const displayAds = [
     {
       title: "The Midnight Collection",
       tag: "New Arrival",

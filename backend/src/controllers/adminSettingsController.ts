@@ -12,7 +12,7 @@ const revalidateFrontend = async (tag: string) => {
     await axios.post('http://localhost:3000/api/revalidate', {
       tag,
       secret: ENV.REVALIDATION_SECRET
-    });
+    }, { timeout: 5000 });
   } catch (error) {
     console.error('Failed to revalidate frontend cache:', error);
   }

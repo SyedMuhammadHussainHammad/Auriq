@@ -10,7 +10,7 @@ const revalidateFrontend = async (tag: string) => {
     await axios.post(`${ENV.FRONTEND_URL}/api/revalidate`, {
       tag,
       secret: ENV.REVALIDATION_SECRET
-    });
+    }, { timeout: 5000 });
   } catch (error) {
     console.error('Failed to revalidate frontend cache:', error);
   }
@@ -58,7 +58,8 @@ export const createAd = async (req: Request, res: Response) => {
       }
     });
 
-    await revalidateFrontend('ads');
+    // Fire and forget revalidation to prevent hanging the API response
+    revalidateFrontend('ads').catch(console.error);
 
     await logAdminAction((req as any).admin.id, 'CREATE_AD', 'Ad', ad.id, null, { title: ad.title });
 
@@ -85,8 +86,13 @@ export const deleteAd = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const existing = await prisma.ad.findUnique({ where: { id: parseInt(id as string) } });
+    if (!existing) {
+      res.json({ success: true, message: 'Ad already deleted' });
+      return;
+    }
     await prisma.ad.delete({ where: { id: parseInt(id as string) } });
-    await revalidateFrontend('ads');
+    // Fire and forget revalidation
+    revalidateFrontend('ads').catch(console.error);
     await logAdminAction((req as any).admin.id, 'DELETE_AD', 'Ad', parseInt(id as string), existing, null);
     res.json({ success: true, message: 'Ad deleted' });
   } catch (error) {
@@ -103,7 +109,8 @@ export const toggleAdStatus = async (req: Request, res: Response) => {
       where: { id: parseInt(id as string) },
       data: { is_active: is_active === 'true' || is_active === true }
     });
-    await revalidateFrontend('ads');
+    // Fire and forget revalidation
+    revalidateFrontend('ads').catch(console.error);
     await logAdminAction((req as any).admin.id, 'TOGGLE_AD_STATUS', 'Ad', ad.id, null, { is_active: ad.is_active });
     res.json({ success: true, data: ad });
   } catch (error) {
