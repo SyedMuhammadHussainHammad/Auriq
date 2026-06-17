@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Package, ShoppingCart, Users, Settings, LogOut, Search, Bell, Store, Ticket, Activity, Star, Mail } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, Users, Settings, LogOut, Search, Bell, Store, Ticket, Activity, Star, Mail, RefreshCcw, Truck, Image, Shield, Database, PieChart, Gift, Award, FileText } from "lucide-react";
 import { useEffect, useState } from "react";
 import { adminAuthService } from "./services/adminAuthService";
+
+import { adminMessageService } from "./services/adminMessageService";
 
 export default function AdminLayout({
   children,
@@ -12,24 +14,55 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const [hasUnread, setHasUnread] = useState(false);
 
-  const navigation = [
-    { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-    { name: "Analytics", href: "/admin/analytics", icon: Activity },
-    { name: "Inventory", href: "/admin/inventory", icon: Package },
-    { name: "Reviews", href: "/admin/reviews", icon: Star },
-    { name: "Messages", href: "/admin/messages", icon: Mail },
-    { name: "Products", href: "/admin/products", icon: Store },
-    { name: "Orders", href: "/admin/orders", icon: ShoppingCart },
-    { name: "Customers", href: "/admin/customers", icon: Users },
-    { name: "Coupons", href: "/admin/discounts", icon: Ticket },
-    // CMS 
-    { name: "Homepage CMS", href: "/admin/homepage", icon: Store },
-    { name: "Our Story CMS", href: "/admin/our-story", icon: Store },
-    { name: "Contact CMS", href: "/admin/contact", icon: Mail },
-    { name: "Footer CMS", href: "/admin/footer", icon: Settings },
-    { name: "SEO Settings", href: "/admin/seo", icon: Search },
-    { name: "General Settings", href: "/admin/settings", icon: Settings },
+  useEffect(() => {
+    if (adminAuthService.getToken()) {
+      adminMessageService.getMessages().then(msgs => {
+        setHasUnread(msgs.some((m: any) => !m.is_read));
+      }).catch(() => {});
+    }
+  }, [pathname]);
+
+  type NavItem = { type: 'link'; name: string; href: string; icon: any } | { type: 'header'; name: string };
+
+  const navigation: NavItem[] = [
+    { type: 'link', name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+    
+    { type: 'header', name: 'STORE OPERATIONS' },
+    { type: 'link', name: "Analytics", href: "/admin/analytics", icon: Activity },
+    { type: 'link', name: "Inventory", href: "/admin/inventory", icon: Package },
+    { type: 'link', name: "Products", href: "/admin/products", icon: Store },
+    { type: 'link', name: "Orders", href: "/admin/orders", icon: ShoppingCart },
+    { type: 'link', name: "Customers", href: "/admin/customers", icon: Users },
+    { type: 'link', name: "Reviews", href: "/admin/reviews", icon: Star },
+    { type: 'link', name: "Messages", href: "/admin/messages", icon: Mail },
+    { type: 'link', name: "Coupons", href: "/admin/discounts", icon: Ticket },
+    { type: 'link', name: "Returns", href: "/admin/returns", icon: RefreshCcw },
+    { type: 'link', name: "Shipping", href: "/admin/shipping", icon: Truck },
+
+    { type: 'header', name: 'MARKETING' },
+    { type: 'link', name: "Newsletter", href: "/admin/newsletter", icon: Mail },
+    { type: 'link', name: "Campaigns", href: "/admin/campaigns", icon: Star },
+    { type: 'link', name: "Gift Sets", href: "/admin/gift-sets", icon: Gift },
+    { type: 'link', name: "Rewards", href: "/admin/rewards", icon: Award },
+
+    { type: 'header', name: 'CONTENT MANAGEMENT' },
+    { type: 'link', name: "Homepage CMS", href: "/admin/homepage", icon: Store },
+    { type: 'link', name: "Our Story CMS", href: "/admin/our-story", icon: Store },
+    { type: 'link', name: "Contact CMS", href: "/admin/contact", icon: Mail },
+    { type: 'link', name: "Footer CMS", href: "/admin/footer", icon: Settings },
+    { type: 'link', name: "Media Library", href: "/admin/media", icon: Image },
+
+    { type: 'header', name: 'BUSINESS' },
+    { type: 'link', name: "SEO Settings", href: "/admin/seo", icon: Search },
+    { type: 'link', name: "Reports", href: "/admin/reports", icon: PieChart },
+    { type: 'link', name: "Audit Logs", href: "/admin/audit-logs", icon: FileText },
+
+    { type: 'header', name: 'SYSTEM' },
+    { type: 'link', name: "General Settings", href: "/admin/settings", icon: Settings },
+    { type: 'link', name: "Security", href: "/admin/security", icon: Shield },
+    { type: 'link', name: "Backup & Export", href: "/admin/backup", icon: Database },
   ];
 
   const router = useRouter();
@@ -63,18 +96,25 @@ export default function AdminLayout({
         </div>
 
         <nav className="flex-1 overflow-y-auto py-8 px-4 flex flex-col gap-2">
-          {navigation.map((item) => {
+          {navigation.map((item, index) => {
+            if (item.type === 'header') {
+              return (
+                <div key={`header-${index}`} className="px-4 py-1 mt-3 text-[10px] font-bold tracking-[0.2em] uppercase text-foreground/40">
+                  {item.name}
+                </div>
+              );
+            }
             const isActive = pathname === item.href;
             return (
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold tracking-wide transition-all ${isActive
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold tracking-wide transition-all ${isActive
                   ? "bg-gold/10 text-gold"
                   : "text-foreground/70 hover:bg-foreground/5 hover:text-foreground"
                   }`}
               >
-                <item.icon className={`w-5 h-5 ${isActive ? "text-gold" : "text-foreground/50"}`} />
+                <item.icon className={`w-4 h-4 ${isActive ? "text-gold" : "text-foreground/50"}`} />
                 {item.name}
               </Link>
             );
@@ -103,13 +143,38 @@ export default function AdminLayout({
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/50" />
             </div>
           </div>
-          <div className="flex items-center gap-6">
-            <button className="text-foreground/60 hover:text-gold transition-colors relative">
+          <div className="flex items-center gap-6 relative">
+            <Link href="/admin/messages" className="text-foreground/60 hover:text-gold transition-colors relative">
               <Bell className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-gold rounded-full"></span>
-            </button>
-            <div className="w-8 h-8 rounded-full bg-gold/20 border border-gold/50 flex items-center justify-center text-xs font-bold text-gold">
+              {hasUnread && (
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-gold rounded-full"></span>
+              )}
+            </Link>
+            
+            <button 
+              onClick={() => {
+                const el = document.getElementById('profile-dropdown');
+                if (el) el.classList.toggle('hidden');
+              }}
+              className="w-8 h-8 rounded-full bg-gold/20 border border-gold/50 flex items-center justify-center text-xs font-bold text-gold hover:bg-gold/30 transition-colors"
+            >
               A
+            </button>
+
+            {/* Profile Dropdown */}
+            <div id="profile-dropdown" className="hidden absolute right-0 top-full mt-4 w-48 bg-background border border-foreground/10 rounded-xl shadow-2xl py-2 z-50">
+              <Link href="/admin/settings" className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-foreground/70 hover:text-gold hover:bg-foreground/5 transition-colors">
+                <Settings className="w-4 h-4" />
+                Settings
+              </Link>
+              <div className="border-t border-foreground/10 my-1"></div>
+              <button 
+                onClick={() => adminAuthService.logout()} 
+                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-red-500/80 hover:text-red-500 hover:bg-red-500/10 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </button>
             </div>
           </div>
         </header>

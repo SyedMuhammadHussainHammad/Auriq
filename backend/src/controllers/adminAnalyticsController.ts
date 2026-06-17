@@ -3,6 +3,7 @@ import prisma from '../config/database';
 
 export const getAnalytics = async (req: Request, res: Response) => {
   try {
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -38,7 +39,7 @@ export const getAnalytics = async (req: Request, res: Response) => {
       prisma.order.count({ where: { payment_status: 'PAID' } }),
       prisma.order.aggregate({ _sum: { total: true }, where: { payment_status: 'PAID' } }),
       prisma.user.count(),
-      prisma.order.groupBy({ by: ['user_id'], _count: { id: true }, having: { id: { _count: { gt: 1 } } } }),
+      prisma.order.groupBy({ by: ['user_id'], _count: { id: true } }),
       prisma.order.findMany({
         take: 10,
         orderBy: { created_at: 'desc' },
@@ -69,7 +70,7 @@ export const getAnalytics = async (req: Request, res: Response) => {
     const revenueYear = revenueYearData._sum.total || 0;
     const totalRevenue = totalRevenueData._sum.total || 0;
     const aov = totalOrdersData > 0 ? (Number(totalRevenue) / totalOrdersData).toFixed(2) : 0;
-    const returningCustomers = returningCustomersData.length;
+    const returningCustomers = returningCustomersData.filter(g => g._count.id > 1).length;
     const totalCustomers = totalCustomersData;
 
     // Top Selling Products
@@ -103,6 +104,7 @@ export const getAnalytics = async (req: Request, res: Response) => {
         revenueWeek,
         revenueMonth,
         revenueYear,
+        totalRevenue,
         totalOrders: totalOrdersData,
         totalCustomers,
         averageOrderValue: Number(aov),
@@ -114,6 +116,6 @@ export const getAnalytics = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('ANALYTICS ERROR:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(500).json({ success: false, message: 'Server error: ' + (error instanceof Error ? error.message : String(error)) });
   }
 };

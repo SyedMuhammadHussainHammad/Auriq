@@ -47,6 +47,19 @@ app.get('/', (req, res) => {
 // Global error handler
 app.use(errorHandler)
 
-app.listen(ENV.PORT, () => {
+import prisma from './config/database'
+
+app.listen(ENV.PORT, async () => {
+  try {
+    console.log('Running auto-migrations for session_id...');
+    await prisma.$executeRawUnsafe(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS session_id TEXT;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE carts ADD COLUMN IF NOT EXISTS session_id TEXT;`);
+    await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS carts_session_id_key ON carts(session_id);`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS carts_session_id_idx ON carts(session_id);`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS orders_session_id_idx ON orders(session_id);`);
+    console.log('Auto-migration complete.');
+  } catch (error) {
+    console.error('Auto-migration failed:', error);
+  }
   console.log(`Server running on port ${ENV.PORT}`)
 })

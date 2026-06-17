@@ -40,6 +40,7 @@ export default function PromotionalCards({
                 src={ad.image_url}
                 alt={ad.title}
                 fill
+                sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover opacity-80 transition-transform duration-700 group-hover:scale-105"
               />
               {/* Gradient Overlay */}

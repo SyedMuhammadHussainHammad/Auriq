@@ -45,6 +45,7 @@ export default function FeaturedAds({ ads = [] }: { ads?: any[] }) {
               src={ad.image_url || "https://images.unsplash.com/photo-1616401784845-180882ba9ba8?q=80&w=2940&auto=format&fit=crop"}
               alt={ad.title}
               fill
+              sizes="100vw"
               className={`object-cover transition-transform duration-[10000ms] ${currentSlide === index ? 'scale-110' : 'scale-100'}`}
               priority={index === 0}
             />

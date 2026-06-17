@@ -9,5 +9,19 @@ export const adminProductService = {
       method: 'POST',
       body: formData,
     });
+  },
+  delete: async (id: number | string) => {
+    return adminFetch(`/products/${id}`, {
+      method: 'DELETE',
+    });
+  },
+  bulkDelete: async (ids: (number | string)[]) => {
+    return adminFetch('/products', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ ids }),
+    });
   }
 };

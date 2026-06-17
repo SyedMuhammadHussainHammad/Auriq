@@ -1,20 +1,39 @@
+"use client";
+
 import { DollarSign, ShoppingCart, Users, Package, TrendingUp } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { adminAnalyticsService } from "../services/adminAnalyticsService";
 
 export default function AdminDashboard() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    adminAnalyticsService.getAnalytics()
+      .then(setData)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading || !data) {
+    return <div className="p-8 text-foreground/50">Loading dashboard data...</div>;
+  }
+
   const stats = [
-    { name: "Total Revenue", value: "Rs. 452,000", change: "+12.5%", icon: DollarSign },
-    { name: "Total Orders", value: "124", change: "+8.2%", icon: ShoppingCart },
-    { name: "Total Customers", value: "86", change: "+14.1%", icon: Users },
-    { name: "Total Products", value: "24", change: "0%", icon: Package },
+    { name: "Total Revenue", value: `Rs. ${data.totalRevenue?.toLocaleString() || '0'}`, change: "", icon: DollarSign },
+    { name: "Total Orders", value: data.totalOrders?.toString() || '0', change: "", icon: ShoppingCart },
+    { name: "Total Customers", value: data.totalCustomers?.toString() || '0', change: "", icon: Users },
+    { name: "Avg Order Value", value: `Rs. ${data.averageOrderValue?.toLocaleString() || '0'}`, change: "", icon: Package },
   ];
 
-  const recentOrders = [
-    { id: "AUR-84729", customer: "John Doe", date: "Today", total: "Rs. 15,000", status: "Processing" },
-    { id: "AUR-39102", customer: "Sarah Smith", date: "Yesterday", total: "Rs. 32,500", status: "Shipped" },
-    { id: "AUR-11029", customer: "Michael Brown", date: "Yesterday", total: "Rs. 12,800", status: "Delivered" },
-    { id: "AUR-99281", customer: "Emily Davis", date: "Jun 03", total: "Rs. 18,200", status: "Pending" },
-  ];
+  const recentOrders = data.recentOrders?.map((order: any) => ({
+    id: `AUR-${order.id.toString().substring(0, 5)}`,
+    customer: order.user?.name || 'Guest',
+    date: new Date(order.created_at).toLocaleDateString(),
+    total: `Rs. ${order.total?.toLocaleString() || '0'}`,
+    status: order.status || order.payment_status || 'Pending'
+  })) || [];
 
   return (
     <div className="flex flex-col gap-8">

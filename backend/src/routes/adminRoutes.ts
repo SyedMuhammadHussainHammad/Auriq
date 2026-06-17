@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { upload } from '../middleware/uploadMiddleware';
 import { adminLogin } from '../controllers/adminAuthController';
-import { createProduct, getAllProducts, updateProduct, deleteProduct, deleteProductImage } from '../controllers/adminProductController';
+import { createProduct, getAllProducts, updateProduct, deleteProduct, deleteProductImage, bulkDeleteProducts } from '../controllers/adminProductController';
 import { createCategory, updateCategory } from '../controllers/adminCategoryController';
 import { createAd, getAllAds, deleteAd, toggleAdStatus } from '../controllers/adminAdController';
 import { getAllOrders, updateOrderStatus, getDashboardStats } from '../controllers/adminOrderController';
@@ -60,8 +60,9 @@ router.delete('/messages/:id', deleteMessage);
 
 // Products
 router.get('/products', getAllProducts);
-router.post('/products', upload.array('images', 5), validateRequest(createProductSchema), createProduct);
-router.put('/products/:id', upload.array('images', 5), validateRequest(updateProductSchema), updateProduct);
+router.post('/products', upload.array('images', 3), validateRequest(createProductSchema), createProduct);
+router.put('/products/:id', upload.array('images', 3), validateRequest(updateProductSchema), updateProduct);
+router.delete('/products', bulkDeleteProducts);
 router.delete('/products/:id', deleteProduct);
 router.delete('/products/images/:imageId', deleteProductImage);
 

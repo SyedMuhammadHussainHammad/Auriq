@@ -12,6 +12,13 @@ export default function AdminProducts() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    isOpen: boolean;
+    type: 'single' | 'bulk';
+    id?: number;
+  }>({ isOpen: false, type: 'single' });
 
   const fetchProducts = async () => {
     try {
@@ -30,6 +37,54 @@ export default function AdminProducts() {
   useEffect(() => {
     fetchProducts();
   }, []);
+
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedIds(products.map(p => p.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelectOne = (id: number) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const confirmDeleteSingle = (id: number) => {
+    setDeleteConfirmation({ isOpen: true, type: 'single', id });
+  };
+
+  const confirmDeleteBulk = () => {
+    if (selectedIds.length === 0) return;
+    setDeleteConfirmation({ isOpen: true, type: 'bulk' });
+  };
+
+  const executeDelete = async () => {
+    try {
+      setIsDeleting(true);
+      if (deleteConfirmation.type === 'single' && deleteConfirmation.id) {
+        const res = await adminProductService.delete(deleteConfirmation.id);
+        if (res.success) {
+          setProducts(products.filter(p => p.id !== deleteConfirmation.id));
+          setSelectedIds(prev => prev.filter(item => item !== deleteConfirmation.id));
+        }
+      } else if (deleteConfirmation.type === 'bulk') {
+        const res = await adminProductService.bulkDelete(selectedIds);
+        if (res.success) {
+          setProducts(products.filter(p => !selectedIds.includes(p.id)));
+          setSelectedIds([]);
+        }
+      }
+      setDeleteConfirmation({ isOpen: false, type: 'single' });
+    } catch (err) {
+      console.error(err);
+      setError("Failed to delete product(s)");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const handleAddProduct = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -78,13 +133,25 @@ export default function AdminProducts() {
           <h1 className="text-3xl font-serif font-bold text-foreground tracking-wide mb-2">Products</h1>
           <p className="text-sm text-foreground/60 font-medium tracking-wide">Manage your inventory, pricing, and product details.</p>
         </div>
-        <button 
-          onClick={() => setIsAddProductOpen(true)}
-          className="bg-gold/90 text-background px-6 py-3 rounded-lg text-sm font-bold tracking-widest hover:bg-gold transition-colors uppercase flex items-center justify-center gap-2 shadow-lg shadow-gold/20"
-        >
-          <Plus className="w-4 h-4" />
-          Add Product
-        </button>
+        <div className="flex gap-3">
+          {selectedIds.length > 0 && (
+            <button 
+              onClick={confirmDeleteBulk}
+              disabled={isDeleting}
+              className="bg-red-500/10 text-red-500 border border-red-500/20 px-6 py-3 rounded-lg text-sm font-bold tracking-widest hover:bg-red-500 hover:text-white transition-colors uppercase flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete Selected ({selectedIds.length})
+            </button>
+          )}
+          <button 
+            onClick={() => setIsAddProductOpen(true)}
+            className="bg-gold/90 text-background px-6 py-3 rounded-lg text-sm font-bold tracking-widest hover:bg-gold transition-colors uppercase flex items-center justify-center gap-2 shadow-lg shadow-gold/20"
+          >
+            <Plus className="w-4 h-4" />
+            Add Product
+          </button>
+        </div>
       </div>
 
       {/* Filters & Search */}
@@ -119,7 +186,12 @@ export default function AdminProducts() {
               <thead>
                 <tr className="border-b border-foreground/10 text-[10px] uppercase tracking-widest text-foreground/50 bg-foreground/[0.02]">
                   <th className="p-4 font-bold w-12">
-                    <input type="checkbox" className="accent-gold w-4 h-4 rounded border-foreground/30" />
+                    <input 
+                      type="checkbox" 
+                      className="accent-gold w-4 h-4 rounded border-foreground/30 cursor-pointer" 
+                      checked={products.length > 0 && selectedIds.length === products.length}
+                      onChange={handleSelectAll}
+                    />
                   </th>
                   <th className="p-4 font-bold">Product</th>
                   <th className="p-4 font-bold">Category ID</th>
@@ -142,7 +214,12 @@ export default function AdminProducts() {
                   return (
                     <tr key={product.id} className="border-b border-foreground/5 hover:bg-foreground/[0.02] transition-colors text-sm group">
                       <td className="p-4">
-                        <input type="checkbox" className="accent-gold w-4 h-4 rounded border-foreground/30" />
+                        <input 
+                          type="checkbox" 
+                          className="accent-gold w-4 h-4 rounded border-foreground/30 cursor-pointer" 
+                          checked={selectedIds.includes(product.id)}
+                          onChange={() => handleSelectOne(product.id)}
+                        />
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-4">
@@ -168,7 +245,11 @@ export default function AdminProducts() {
                           <button className="text-foreground/50 hover:text-gold transition-colors p-2 bg-foreground/5 rounded-lg">
                             <Edit className="w-4 h-4" />
                           </button>
-                          <button className="text-foreground/50 hover:text-red-500 transition-colors p-2 bg-foreground/5 rounded-lg">
+                          <button 
+                            className="text-foreground/50 hover:text-red-500 transition-colors p-2 bg-foreground/5 rounded-lg disabled:opacity-50"
+                            onClick={() => confirmDeleteSingle(product.id)}
+                            disabled={isDeleting}
+                          >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
@@ -210,14 +291,60 @@ export default function AdminProducts() {
               <textarea name="description" placeholder="A rich, woody fragrance..." rows={3} className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground" required />
             </div>
             <div className="flex flex-col gap-2 md:col-span-2">
-              <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Upload Images</label>
-              <input type="file" name="images" multiple accept="image/*" className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-gold/10 file:text-gold hover:file:bg-gold/20" required />
+              <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Upload Images (Max 3)</label>
+              <input 
+                type="file" 
+                name="images" 
+                multiple 
+                accept="image/*" 
+                onChange={(e) => {
+                  if (e.target.files && e.target.files.length > 3) {
+                    alert("You can only upload a maximum of 3 images.");
+                    e.target.value = "";
+                  }
+                }}
+                className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-gold/10 file:text-gold hover:file:bg-gold/20" 
+                required 
+              />
             </div>
           </div>
           <button type="submit" disabled={saving} className="w-full bg-gold text-background font-bold uppercase tracking-widest py-3 rounded-lg text-sm mt-4 hover:bg-gold/90 transition-colors disabled:opacity-50">
             {saving ? "Saving Product..." : "Save Product"}
           </button>
         </form>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal 
+        isOpen={deleteConfirmation.isOpen} 
+        onClose={() => setDeleteConfirmation({ isOpen: false, type: 'single' })} 
+        title="Confirm Deletion"
+        maxWidth="max-w-md"
+      >
+        <div className="flex flex-col gap-6">
+          <p className="text-foreground/80 text-sm tracking-wide">
+            {deleteConfirmation.type === 'bulk' 
+              ? `Are you sure you want to permanently delete ${selectedIds.length} selected products?`
+              : "Are you sure you want to permanently delete this product?"}
+            <br /><br />
+            This action cannot be undone. Historical orders will remain intact.
+          </p>
+          <div className="flex justify-end gap-3 mt-2">
+            <button 
+              onClick={() => setDeleteConfirmation({ isOpen: false, type: 'single' })}
+              className="px-5 py-2.5 rounded-lg text-sm font-bold tracking-widest hover:bg-foreground/5 transition-colors uppercase border border-foreground/10 text-foreground/70"
+            >
+              Cancel
+            </button>
+            <button 
+              onClick={executeDelete}
+              disabled={isDeleting}
+              className="px-5 py-2.5 rounded-lg text-sm font-bold tracking-widest bg-red-500 text-white hover:bg-red-600 transition-colors uppercase flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

@@ -7,8 +7,8 @@ dotenv.config();
 const prisma = new PrismaClient();
 
 async function main() {
-  const email = 'admin@auriq.com';
-  const password = 'password123';
+  const email = 'uzairahmed@auriqfragrances.com';
+  const password = 'Uzair600@auriq';
   
   const existingAdmin = await prisma.admin.findUnique({ where: { email } });
   
@@ -28,7 +28,7 @@ async function main() {
     }
   });
 
-  console.log('Admin seeded successfully. Email: admin@auriq.com | Password: password123');
+  console.log('Admin seeded successfully. Email: uzairahmed@auriqfragrances.com | Password: Uzair600@auriq');
 }
 
 main()

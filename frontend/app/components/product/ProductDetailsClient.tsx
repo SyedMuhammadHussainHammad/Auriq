@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Heart, ShoppingBag, ShieldCheck, Truck, RefreshCcw } from "lucide-react";
 import { useCart } from "../../context/CartContext";
@@ -8,7 +8,19 @@ import { useCart } from "../../context/CartContext";
 export default function ProductDetailsClient({ product }: { product: any }) {
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<'notes' | 'details'>('notes');
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { addItem } = useCart();
+  
+  const images = product.images || [];
+  
+  useEffect(() => {
+    if (images.length > 1) {
+      const timer = setInterval(() => {
+        setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+      }, 4000);
+      return () => clearInterval(timer);
+    }
+  }, [images.length]);
 
   // Find price from first variant if available, otherwise fallback
   const firstVariant = product.variants?.[0];
@@ -37,15 +49,50 @@ export default function ProductDetailsClient({ product }: { product: any }) {
       <div className="w-full lg:w-1/2 sticky top-32">
         <div className="relative aspect-[4/5] overflow-hidden lux-glass-card p-2 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
           <div className="relative w-full h-full rounded-xl overflow-hidden bg-background">
-            <Image
-              src={product.images?.[0]?.image_url || "/placeholder.jpg"}
-              alt={product.name}
-              fill
-              className="object-cover opacity-90 transition-all duration-1000 hover:scale-110 hover:opacity-100"
-              priority
-            />
+            {images.length > 0 ? (
+              images.map((img: any, idx: number) => (
+                <Image
+                  key={idx}
+                  src={img.image_url}
+                  alt={`${product.name} - Image ${idx + 1}`}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className={`object-cover transition-all duration-1000 ${
+                    currentImageIndex === idx 
+                      ? 'opacity-90 z-10 scale-100 hover:scale-110 hover:opacity-100' 
+                      : 'opacity-0 z-0 scale-105'
+                  }`}
+                  priority={idx === 0}
+                />
+              ))
+            ) : (
+              <Image
+                src="/placeholder.jpg"
+                alt={product.name}
+                fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover opacity-90"
+              />
+            )}
+            
+            {/* Image Navigation Dots */}
+            {images.length > 1 && (
+              <div className="absolute bottom-6 left-0 right-0 z-20 flex justify-center gap-2">
+                {images.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentImageIndex(idx)}
+                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                      currentImageIndex === idx ? "bg-gold w-6" : "bg-white/50 hover:bg-white/80"
+                    }`}
+                    aria-label={`View image ${idx + 1}`}
+                  />
+                ))}
+              </div>
+            )}
+            
             {/* Subtle vignette over image */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none z-10"></div>
           </div>
         </div>
       </div>

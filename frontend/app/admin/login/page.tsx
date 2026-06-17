@@ -8,6 +8,7 @@ export default function AdminLogin() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -55,14 +56,23 @@ export default function AdminLogin() {
           </div>
           <div className="flex flex-col gap-2">
             <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Password</label>
-            <input 
-              type="password" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="bg-transparent border border-foreground/20 rounded-lg px-4 py-3 text-sm focus:border-gold outline-none text-foreground transition-colors" 
-              minLength={8}
-              required 
-            />
+            <div className="relative">
+              <input 
+                type={showPassword ? "text" : "password"} 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-transparent border border-foreground/20 rounded-lg px-4 py-3 text-sm focus:border-gold outline-none text-foreground transition-colors pr-10" 
+                minLength={8}
+                required 
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] uppercase font-bold text-foreground/50 hover:text-foreground transition-colors"
+              >
+                {showPassword ? "HIDE" : "SHOW"}
+              </button>
+            </div>
           </div>
           <button 
             type="submit" 

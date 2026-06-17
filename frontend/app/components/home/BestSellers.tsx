@@ -45,6 +45,7 @@ export default function BestSellers({ products = [] }: { products?: any[] }) {
                       src={imageUrl}
                       alt={product.name}
                       fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                       className="object-cover opacity-90 transition-all duration-700 group-hover:scale-110 group-hover:opacity-100"
                     />
                     

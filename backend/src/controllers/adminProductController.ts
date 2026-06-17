@@ -24,10 +24,9 @@ export const createProduct = async (req: Request, res: Response) => {
 
     let uploadedImages: string[] = [];
     if (files && files.length > 0) {
-      for (const file of files) {
-        const result = await uploadToCloudinary(file.buffer, 'auriq_products');
-        uploadedImages.push(result.secure_url);
-      }
+      const uploadPromises = files.map(file => uploadToCloudinary(file.buffer, 'auriq_products'));
+      const results = await Promise.all(uploadPromises);
+      uploadedImages = results.map(res => res.secure_url);
     }
 
     const product = await prisma.product.create({
@@ -81,8 +80,9 @@ export const getAllProducts = async (req: Request, res: Response) => {
     const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
 
     const [total, products] = await Promise.all([
-      prisma.product.count(),
+      prisma.product.count({ where: { is_active: true } }),
       prisma.product.findMany({
+        where: { is_active: true },
         include: {
           category: true,
           variants: true,
@@ -141,10 +141,9 @@ export const updateProduct = async (req: Request, res: Response) => {
     // Upload new images if provided
     let uploadedImages: string[] = []
     if (files && files.length > 0) {
-      for (const file of files) {
-        const result = await uploadToCloudinary(file.buffer, 'auriq_products')
-        uploadedImages.push(result.secure_url)
-      }
+      const uploadPromises = files.map(file => uploadToCloudinary(file.buffer, 'auriq_products'));
+      const results = await Promise.all(uploadPromises);
+      uploadedImages = results.map(res => res.secure_url);
     }
 
     // Update product
@@ -238,6 +237,34 @@ export const deleteProduct = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('DELETE PRODUCT ERROR:', error)
     res.status(500).json({ success: false, message: 'Server error' })
+  }
+}
+
+export const bulkDeleteProducts = async (req: Request, res: Response) => {
+  try {
+    const { ids } = req.body;
+    
+    if (!Array.isArray(ids) || ids.length === 0) {
+      res.status(400).json({ success: false, message: 'Invalid or missing product IDs' });
+      return;
+    }
+
+    const intIds = ids.map(id => parseInt(id));
+
+    // Soft delete all specified products
+    await prisma.product.updateMany({
+      where: { id: { in: intIds } },
+      data: { is_active: false }
+    });
+
+    await revalidateFrontend('products');
+
+    await logAdminAction((req as any).admin.id, 'BULK_DELETE_PRODUCTS', 'Product', 0, null, { deleted_ids: intIds, is_active: false });
+
+    res.json({ success: true, message: 'Products deleted successfully' });
+  } catch (error) {
+    console.error('BULK DELETE PRODUCTS ERROR:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 }
 
