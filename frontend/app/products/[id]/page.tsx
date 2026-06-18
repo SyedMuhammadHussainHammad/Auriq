@@ -4,9 +4,9 @@ import Link from "next/link";
 import Header from "../../components/layout/Header";
 import Footer from "../../components/layout/Footer";
 import ProductDetailsClient from "../../components/product/ProductDetailsClient";
+import ProductReviews from "../../components/product/ProductReviews";
 import { productService } from "../../services/productService";
 
-// Fetch the product dynamically
 async function getProduct(id: string) {
   try {
     const response = await productService.getProductById(id);
@@ -16,14 +16,12 @@ async function getProduct(id: string) {
   }
 }
 
-// Generate dynamic metadata for advanced SEO
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const product = await getProduct(params.id);
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const product = await getProduct(id);
 
   if (!product) {
-    return {
-      title: "Product Not Found | Auriq",
-    };
+    return { title: "Product Not Found | Auriq" };
   }
 
   const imageUrl = product.images?.[0]?.image_url || "/icon.svg";
@@ -34,14 +32,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     openGraph: {
       title: `${product.name} | Auriq Fragrances`,
       description: product.meta_desc || product.description,
-      images: [
-        {
-          url: imageUrl,
-          width: 800,
-          height: 1000,
-          alt: product.name,
-        },
-      ],
+      images: [{ url: imageUrl, width: 800, height: 1000, alt: product.name }],
       type: "website",
     },
     twitter: {
@@ -53,8 +44,9 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   };
 }
 
-export default async function ProductPage({ params }: { params: { id: string } }) {
-  const product = await getProduct(params.id);
+export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const product = await getProduct(id);
 
   if (!product) {
     return (
@@ -78,12 +70,10 @@ export default async function ProductPage({ params }: { params: { id: string } }
     <>
       <Header />
       <main className="flex-1 w-full bg-perfume-main min-h-screen relative overflow-hidden">
-        {/* Noise overlay */}
         <div className="absolute inset-0 bg-noise opacity-30 pointer-events-none z-0"></div>
 
-        {/* Back Navigation */}
         <div className="relative z-10 container-lux pt-12 pb-6">
-          <Link 
+          <Link
             href="/collections"
             className="flex items-center gap-2 text-foreground/50 hover:text-gold transition-colors text-xs font-bold tracking-[0.2em] uppercase w-max"
           >
@@ -94,6 +84,10 @@ export default async function ProductPage({ params }: { params: { id: string } }
 
         <div className="relative z-10 container-lux pb-24">
           <ProductDetailsClient product={product} />
+        </div>
+
+        <div className="relative z-10">
+          <ProductReviews productId={product.id} />
         </div>
       </main>
       <Footer />
