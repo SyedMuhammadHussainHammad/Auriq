@@ -63,3 +63,11 @@ app.listen(ENV.PORT, async () => {
   }
   console.log(`Server running on port ${ENV.PORT}`)
 })
+// Keep Neon DB alive by pinging every 4 minutes
+setInterval(async () => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+  } catch (e) {
+    console.log('DB keepalive failed:', e);
+  }
+}, 4 * 60 * 1000);
