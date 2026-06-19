@@ -96,15 +96,15 @@ export default function InvoicePage() {
               
               {order.items?.map((item: any) => (
                 <div key={item.id} className="grid grid-cols-4 mb-4 text-sm font-medium tracking-wide">
-                  <div className="col-span-2">{item.product?.name || 'Unknown Product'}</div>
+                  <div className="col-span-2">{item.item_name || item.product?.name || 'Unknown Product'}</div>
                   <div className="text-center">{item.quantity}</div>
-                  <div className="text-right">Rs. {Number(item.price_at_time).toLocaleString()}</div>
+                  <div className="text-right">Rs. {Number(item.unit_price).toLocaleString()}</div>
                 </div>
               ))}
 
               <div className="grid grid-cols-4 border-t border-foreground/10 pt-4 text-sm font-medium tracking-wide print:border-black/10">
                 <div className="col-span-3 text-right text-foreground/60 print:text-gray-600">Subtotal:</div>
-                <div className="text-right">Rs. {Number(order.total_amount).toLocaleString()}</div>
+                <div className="text-right">Rs. {Number(order.total).toLocaleString()}</div>
               </div>
               <div className="grid grid-cols-4 mt-2 text-sm font-medium tracking-wide">
                 <div className="col-span-3 text-right text-foreground/60 print:text-gray-600">Shipping:</div>
@@ -112,7 +112,7 @@ export default function InvoicePage() {
               </div>
               <div className="grid grid-cols-4 mt-4 text-lg font-bold tracking-widest border-t border-foreground/20 pt-4 print:border-black/20">
                 <div className="col-span-3 text-right text-gold print:text-black">Total:</div>
-                <div className="text-right">Rs. {Number(order.total_amount).toLocaleString()}</div>
+                <div className="text-right">Rs. {Number(order.total).toLocaleString()}</div>
               </div>
             </div>
 

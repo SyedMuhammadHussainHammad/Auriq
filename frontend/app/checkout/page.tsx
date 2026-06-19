@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight, ShieldCheck, CreditCard, Truck, CheckCircle2, Smartphone, User, UserX } from "lucide-react";
+import { ChevronRight, ShieldCheck, CreditCard, Truck, CheckCircle2, User, UserX } from "lucide-react";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import { useCart } from "../context/CartContext";
@@ -30,7 +30,7 @@ export default function CheckoutPage() {
   const [isGuest, setIsGuest] = useState(true);
   const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "cod" | "jazzcash" | "easypaisa">("card");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "cod">("cod");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [orderId, setOrderId] = useState<number | null>(null);
@@ -48,6 +48,7 @@ export default function CheckoutPage() {
   const [city, setCity] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [province, setProvince] = useState("Sindh");
+  const [shippingConfig, setShippingConfig] = useState<{ flat_fee: string; free_shipping_above: string } | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('auriqAccessToken');
@@ -61,13 +62,14 @@ export default function CheckoutPage() {
         else if (addresses.length > 0) setSelectedAddressId(addresses[0].id);
       }).catch(console.error);
     }
+    miscService.getShippingConfig()
+      .then(setShippingConfig)
+      .catch(() => setShippingConfig({ flat_fee: "250", free_shipping_above: "5000" }));
   }, []);
 
-const [shippingConfig, setShippingConfig] = useState<{ flat_fee: string; free_shipping_above: string } | null>(null); useEffect(() => {miscService.getShippingConfig() .then(setShippingConfig) .catch(() => setShippingConfig({ flat_fee: "250", free_shipping_above: "5000" }));}, []);
-
-const flatFee = shippingConfig ? Number(shippingConfig.flat_fee) : 250;
-const freeAbove = shippingConfig ? Number(shippingConfig.free_shipping_above) : 5000;
-const shippingFee = cartTotal >= freeAbove ? 0 : flatFee;
+  const flatFee = shippingConfig ? Number(shippingConfig.flat_fee) : 250;
+  const freeAbove = shippingConfig ? Number(shippingConfig.free_shipping_above) : 5000;
+  const shippingFee = cartTotal >= freeAbove ? 0 : flatFee;
   const discountAmount = appliedDiscount?.discountAmount || 0;
   const total = cartTotal + shippingFee - discountAmount;
 
@@ -139,7 +141,7 @@ const shippingFee = cartTotal >= freeAbove ? 0 : flatFee;
                 Thank you for your purchase. Your order #AUR-{orderId} has been received and is being processed.
               </p>
               <div className="flex gap-4 w-full max-w-sm">
-                <Link href={isGuest ? "/invoice" : "/orders?loyalty=true"} className="flex-1 bg-transparent border border-foreground/20 text-foreground py-4 text-sm font-bold tracking-widest hover:border-gold hover:text-gold transition-colors uppercase flex justify-center items-center">View Order</Link>
+                <Link href={isGuest ? "/invoice" : "/orders"} className="flex-1 bg-transparent border border-foreground/20 text-foreground py-4 text-sm font-bold tracking-widest hover:border-gold hover:text-gold transition-colors uppercase flex justify-center items-center">View Order</Link>
                 <Link href="/collections" className="flex-1 bg-gold/90 text-background py-4 text-sm font-bold tracking-widest hover:bg-foreground transition-colors uppercase flex justify-center items-center">Continue</Link>
               </div>
             </div>
@@ -280,50 +282,41 @@ const shippingFee = cartTotal >= freeAbove ? 0 : flatFee;
                       <ShieldCheck className="w-4 h-4 text-gold" /> All transactions are secure and encrypted.
                     </p>
                     <div className="flex flex-col border border-foreground/20 rounded-lg overflow-hidden">
-                      <label className={`flex items-center gap-4 p-4 cursor-pointer transition-colors ${paymentMethod === 'card' ? 'bg-foreground/5' : 'hover:bg-foreground/5'}`}>
-                        <input type="radio" name="payment" value="card" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} className="accent-gold w-4 h-4" />
-                        <CreditCard className="w-5 h-5 text-foreground/70" />
-                        <span className="text-sm font-semibold tracking-wide text-foreground">Credit Card (Mocked)</span>
-                      </label>
-                      {paymentMethod === 'card' && (
-                        <div className="p-4 border-t border-foreground/10 bg-foreground/5 grid grid-cols-2 gap-4">
-                          <div className="col-span-2"><input type="text" placeholder="Card Number" className="bg-transparent border border-foreground/20 rounded p-3 text-sm focus:outline-none focus:border-gold transition-colors placeholder:text-foreground/30 text-foreground font-medium tracking-wide w-full" /></div>
-                          <input type="text" placeholder="MM/YY" className="bg-transparent border border-foreground/20 rounded p-3 text-sm focus:outline-none focus:border-gold transition-colors placeholder:text-foreground/30 text-foreground font-medium tracking-wide w-full" />
-                          <input type="text" placeholder="CVC" className="bg-transparent border border-foreground/20 rounded p-3 text-sm focus:outline-none focus:border-gold transition-colors placeholder:text-foreground/30 text-foreground font-medium tracking-wide w-full" />
-                        </div>
-                      )}
-                      <label className={`flex items-center gap-4 p-4 border-t border-foreground/20 cursor-pointer transition-colors ${paymentMethod === 'jazzcash' ? 'bg-foreground/5' : 'hover:bg-foreground/5'}`}>
-                        <input type="radio" name="payment" value="jazzcash" checked={paymentMethod === 'jazzcash'} onChange={() => setPaymentMethod('jazzcash')} className="accent-gold w-4 h-4" />
-                        <Smartphone className="w-5 h-5 text-foreground/70" />
-                        <span className="text-sm font-semibold tracking-wide text-foreground">JazzCash</span>
-                      </label>
-                      {paymentMethod === 'jazzcash' && (
-                        <div className="p-4 border-t border-foreground/10 bg-foreground/5">
-                          <input type="text" placeholder="JazzCash Mobile Number (03XXXXXXXXX)" className="bg-transparent border border-foreground/20 rounded p-3 text-sm focus:outline-none focus:border-gold transition-colors placeholder:text-foreground/30 text-foreground font-medium tracking-wide w-full max-w-sm" />
-                          <p className="text-xs text-foreground/60 font-medium tracking-wide mt-3">Please ensure your JazzCash account is active and has sufficient balance.</p>
-                        </div>
-                      )}
-                      <label className={`flex items-center gap-4 p-4 border-t border-foreground/20 cursor-pointer transition-colors ${paymentMethod === 'easypaisa' ? 'bg-foreground/5' : 'hover:bg-foreground/5'}`}>
-                        <input type="radio" name="payment" value="easypaisa" checked={paymentMethod === 'easypaisa'} onChange={() => setPaymentMethod('easypaisa')} className="accent-gold w-4 h-4" />
-                        <Smartphone className="w-5 h-5 text-foreground/70" />
-                        <span className="text-sm font-semibold tracking-wide text-foreground">EasyPaisa</span>
-                      </label>
-                      {paymentMethod === 'easypaisa' && (
-                        <div className="p-4 border-t border-foreground/10 bg-foreground/5">
-                          <input type="text" placeholder="EasyPaisa Mobile Number (03XXXXXXXXX)" className="bg-transparent border border-foreground/20 rounded p-3 text-sm focus:outline-none focus:border-gold transition-colors placeholder:text-foreground/30 text-foreground font-medium tracking-wide w-full max-w-sm" />
-                          <p className="text-xs text-foreground/60 font-medium tracking-wide mt-3">You will receive an approval prompt on your EasyPaisa app.</p>
-                        </div>
-                      )}
-                      <label className={`flex items-center gap-4 p-4 border-t border-foreground/20 cursor-pointer transition-colors ${paymentMethod === 'cod' ? 'bg-foreground/5' : 'hover:bg-foreground/5'}`}>
+
+                      {/* COD */}
+                      <label className={`flex items-center gap-4 p-4 cursor-pointer transition-colors ${paymentMethod === 'cod' ? 'bg-foreground/5' : 'hover:bg-foreground/5'}`}>
                         <input type="radio" name="payment" value="cod" checked={paymentMethod === 'cod'} onChange={() => setPaymentMethod('cod')} className="accent-gold w-4 h-4" />
                         <Truck className="w-5 h-5 text-foreground/70" />
                         <span className="text-sm font-semibold tracking-wide text-foreground">Cash on Delivery (COD)</span>
                       </label>
                       {paymentMethod === 'cod' && (
                         <div className="p-4 border-t border-foreground/10 bg-foreground/5">
-                          <p className="text-xs text-foreground/60 font-medium tracking-wide">Pay with cash upon delivery.</p>
+                          <p className="text-xs text-foreground/60 font-medium tracking-wide">Pay with cash upon delivery. Our rider will collect payment at your door.</p>
                         </div>
                       )}
+
+                      {/* Card */}
+                      <label className={`flex items-center gap-4 p-4 border-t border-foreground/20 cursor-pointer transition-colors ${paymentMethod === 'card' ? 'bg-foreground/5' : 'hover:bg-foreground/5'}`}>
+                        <input type="radio" name="payment" value="card" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} className="accent-gold w-4 h-4" />
+                        <CreditCard className="w-5 h-5 text-foreground/70" />
+                        <div className="flex items-center justify-between flex-1">
+                          <span className="text-sm font-semibold tracking-wide text-foreground">Debit / Credit Card</span>
+                          <div className="flex items-center gap-1">
+                            <span className="text-[10px] font-bold bg-blue-600 text-white px-2 py-0.5 rounded">VISA</span>
+                            <span className="text-[10px] font-bold bg-red-500 text-white px-2 py-0.5 rounded">MC</span>
+                          </div>
+                        </div>
+                      </label>
+                      {paymentMethod === 'card' && (
+                        <div className="p-4 border-t border-foreground/10 bg-foreground/5 grid grid-cols-2 gap-4">
+                          <div className="col-span-2">
+                            <input type="text" placeholder="Card Number" className="bg-transparent border border-foreground/20 rounded p-3 text-sm focus:outline-none focus:border-gold transition-colors placeholder:text-foreground/30 text-foreground font-medium tracking-wide w-full" />
+                          </div>
+                          <input type="text" placeholder="MM/YY" className="bg-transparent border border-foreground/20 rounded p-3 text-sm focus:outline-none focus:border-gold transition-colors placeholder:text-foreground/30 text-foreground font-medium tracking-wide w-full" />
+                          <input type="text" placeholder="CVC" className="bg-transparent border border-foreground/20 rounded p-3 text-sm focus:outline-none focus:border-gold transition-colors placeholder:text-foreground/30 text-foreground font-medium tracking-wide w-full" />
+                        </div>
+                      )}
+
                     </div>
                   </div>
                 </section>

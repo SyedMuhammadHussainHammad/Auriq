@@ -85,7 +85,7 @@ export default function OrdersPage() {
                     </div>
                     <div>
                       <span className="block text-[10px] uppercase tracking-widest text-foreground/50 font-bold mb-1">Total</span>
-                      <span className="text-sm text-foreground font-semibold tracking-wide">Rs. {Number(order.total_amount).toLocaleString()}</span>
+                      <span className="text-sm text-foreground font-semibold tracking-wide">Rs. {Number(order.total).toLocaleString()}</span>
                     </div>
                     <div className="col-span-2 md:col-span-1">
                       <span className="block text-[10px] uppercase tracking-widest text-foreground/50 font-bold mb-1">Order Number</span>
