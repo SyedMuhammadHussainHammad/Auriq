@@ -15,6 +15,7 @@ function AccountContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
   const [activeTab, setActiveTab] = useState("orders");
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -96,6 +97,7 @@ function AccountContent() {
     };
 
     checkLoginState();
+    setIsChecking(false);
 
     const tab = searchParams.get('tab');
     if (tab) setActiveTab(tab);
@@ -712,7 +714,7 @@ function AccountContent() {
       <Header />
       <main className="flex-1 w-full bg-perfume-main min-h-screen relative overflow-hidden">
         <div className="absolute inset-0 bg-noise opacity-30 pointer-events-none z-0"></div>
-        {isLoggedIn ? renderLoggedInView() : renderLoggedOutView()}
+        {isChecking ? <div className="flex items-center justify-center min-h-screen"><div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin"></div></div> : isLoggedIn ? renderLoggedInView() : renderLoggedOutView()}
       </main>
       <Footer />
     </>
