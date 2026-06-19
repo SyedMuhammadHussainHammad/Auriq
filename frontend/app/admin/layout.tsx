@@ -39,7 +39,6 @@ export default function AdminLayout({
     { type: 'link', name: "Reviews", href: "/admin/reviews", icon: Star },
     { type: 'link', name: "Messages", href: "/admin/messages", icon: Mail },
     { type: 'link', name: "Coupons", href: "/admin/discounts", icon: Ticket },
-    { type: 'link', name: "Returns", href: "/admin/returns", icon: RefreshCcw },
     { type: 'link', name: "Shipping", href: "/admin/shipping", icon: Truck },
 
     { type: 'header', name: 'MARKETING' },
@@ -56,7 +55,6 @@ export default function AdminLayout({
     { type: 'link', name: "Media Library", href: "/admin/media", icon: Image },
 
     { type: 'header', name: 'BUSINESS' },
-    { type: 'link', name: "SEO Settings", href: "/admin/seo", icon: Search },
     { type: 'link', name: "Reports", href: "/admin/reports", icon: PieChart },
     { type: 'link', name: "Audit Logs", href: "/admin/audit-logs", icon: FileText },
 
