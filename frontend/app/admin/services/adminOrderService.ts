@@ -1,27 +1,13 @@
-import { apiFetch } from '../../utils/api';
-
-const getHeaders = () => {
-  let token = '';
-  if (typeof window !== 'undefined') {
-    token = localStorage.getItem('adminToken') || '';
-  }
-  return {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json',
-  };
-};
+import { adminFetch } from '../lib/adminFetch';
 
 export const adminOrderService = {
   getAll: async () => {
-    return await apiFetch('/admin/orders', {
-      headers: getHeaders(),
-    });
+    return await adminFetch('/orders');
   },
 
   updateStatus: async (orderId: string, status: string) => {
-    return await apiFetch(`/admin/orders/${orderId}/status`, {
+    return await adminFetch(`/orders/${orderId}/status`, {
       method: 'PUT',
-      headers: getHeaders(),
       body: JSON.stringify({ status }),
     });
   }

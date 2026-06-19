@@ -543,7 +543,7 @@ function AccountContent() {
                           <span className={`px-3 py-1 rounded text-[10px] font-bold uppercase tracking-widest border ${order.status === 'DELIVERED' ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-gold/10 text-gold border-gold/20'}`}>
                             {order.status}
                           </span>
-                          <Link href={`/orders/${order.id}`} className="text-gold hover:underline text-xs tracking-widest uppercase font-bold">View Details</Link>
+                          <Link href={`/invoice/${order.id}`} className="text-gold hover:underline text-xs tracking-widest uppercase font-bold">View Details</Link>
                         </div>
                       </div>
                     ))
