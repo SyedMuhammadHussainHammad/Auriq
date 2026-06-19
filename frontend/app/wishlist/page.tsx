@@ -3,13 +3,17 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Trash2, ShoppingBag } from "lucide-react";
+import { Trash2, ShoppingBag, Check } from "lucide-react";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import { apiFetch } from "../utils/api";
+import { useCart } from "../context/CartContext";
 
 export default function WishlistPage() {
+  const { addToCart } = useCart();
   const [wishlistItems, setWishlistItems] = useState<any[]>([]);
+  const [addingId, setAddingId] = useState<number | null>(null);
+  const [addedId, setAddedId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -60,6 +64,24 @@ export default function WishlistPage() {
     }
   };
 
+  const handleAddToCart = async (e: React.MouseEvent, variantId?: number) => {
+    e.preventDefault();
+    if (!variantId) {
+      alert("This product has no available size/variant.");
+      return;
+    }
+    setAddingId(variantId);
+    try {
+      await addToCart(variantId, undefined, 1);
+      setAddedId(variantId);
+      setTimeout(() => setAddedId(null), 1500);
+    } catch (err) {
+      alert("Failed to add to cart.");
+    } finally {
+      setAddingId(null);
+    }
+  };
+
   return (
     <>
       <Header />
@@ -92,7 +114,7 @@ export default function WishlistPage() {
                 
                 return (
                   <div key={item.id} className="group cursor-pointer">
-                    <div className="relative aspect-[4/5] overflow-hidden mb-6 bg-foreground/5 lux-glass-card">
+                    <Link href={`/products/${product.id}`} className="relative aspect-[4/5] overflow-hidden mb-6 bg-foreground/5 lux-glass-card block">
                       <Image
                         src={imageUrl}
                         alt={product.name}
@@ -105,16 +127,25 @@ export default function WishlistPage() {
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
-                    </div>
+                    </Link>
                     
                     <div className="flex flex-col items-center text-center">
                       <span className="text-gold text-[10px] font-bold tracking-[0.3em] uppercase mb-2">Auriq Exclusives</span>
-                      <h3 className="text-xl font-serif text-foreground font-bold tracking-widest mb-2">{product.name}</h3>
+                      <Link href={`/products/${product.id}`}>
+                        <h3 className="text-xl font-serif text-foreground font-bold tracking-widest mb-2 hover:text-gold transition-colors">{product.name}</h3>
+                      </Link>
                       <p className="text-sm text-foreground/70 tracking-widest font-light mb-4">Rs. {price}</p>
                       
-                      <button className="w-full flex items-center justify-center gap-2 border border-foreground/20 text-foreground py-3 text-xs font-bold tracking-[0.2em] uppercase hover:bg-foreground hover:text-background transition-colors">
-                        <ShoppingBag className="w-4 h-4" />
-                        Add to Cart
+                      <button
+                        onClick={(e) => handleAddToCart(e, product.variants?.[0]?.id)}
+                        disabled={addingId === product.variants?.[0]?.id}
+                        className={`w-full flex items-center justify-center gap-2 border py-3 text-xs font-bold tracking-[0.2em] uppercase transition-colors disabled:opacity-50 ${addedId === product.variants?.[0]?.id ? 'border-gold bg-gold text-background' : 'border-foreground/20 text-foreground hover:bg-foreground hover:text-background'}`}
+                      >
+                        {addedId === product.variants?.[0]?.id ? (
+                          <><Check className="w-4 h-4" /> Added</>
+                        ) : (
+                          <><ShoppingBag className="w-4 h-4" /> {addingId === product.variants?.[0]?.id ? "Adding..." : "Add to Cart"}</>
+                        )}
                       </button>
                     </div>
                   </div>

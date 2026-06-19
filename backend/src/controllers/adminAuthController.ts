@@ -23,7 +23,7 @@ export const adminLogin = async (req: Request, res: Response) => {
     const accessToken = jwt.sign(
       { id: admin.id, email: admin.email, role: 'ADMIN' },
       ENV.JWT_ACCESS_SECRET,
-      { expiresIn: '15m' }
+      { expiresIn: '7d' }
     );
 
     const refreshToken = jwt.sign(

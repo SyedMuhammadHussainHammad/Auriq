@@ -26,7 +26,7 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 
     const order = await prisma.order.update({
       where: { id: parseInt(id as string) },
-      data: { status }
+      data: { status: status.toUpperCase() as any }
     });
 
     await logAdminAction((req as any).admin.id, 'UPDATE_ORDER_STATUS', 'Order', order.id, null, { status });

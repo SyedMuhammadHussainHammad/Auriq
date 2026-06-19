@@ -13,16 +13,23 @@ export default function CollectionsClient({ initialProducts }: { initialProducts
   const router = useRouter();
   const searchParams = useSearchParams();
   const sortQuery = searchParams.get('sort') || 'featured';
+  const searchQuery = searchParams.get('search') || '';
 
   const [sortBy, setSortBy] = useState(sortQuery);
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   
   const [products] = useState<any[]>(initialProducts);
+  const [search, setSearch] = useState(searchQuery);
+  const [visibleCount, setVisibleCount] = useState(12);
 
   useEffect(() => {
     if (sortQuery) setSortBy(sortQuery);
   }, [sortQuery]);
+
+  useEffect(() => {
+    setSearch(searchQuery);
+  }, [searchQuery]);
 
   const handleSortChange = (val: string) => {
     setSortBy(val);
@@ -40,7 +47,9 @@ export default function CollectionsClient({ initialProducts }: { initialProducts
     }
   };
 
-  const sortedProducts = [...products].sort((a, b) => {
+  const filteredProducts = products.filter(p => !search || p.name.toLowerCase().includes(search.toLowerCase()) || (p.brand || "").toLowerCase().includes(search.toLowerCase()));
+
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
     const priceA = Number(a.variants?.[0]?.price || 0);
     const priceB = Number(b.variants?.[0]?.price || 0);
     
@@ -313,11 +322,13 @@ export default function CollectionsClient({ initialProducts }: { initialProducts
               </div>
               
               {/* Pagination */}
-              {sortedProducts.length > 0 && (
+              {sortedProducts.length > 0 && sortedProducts.slice(0, visibleCount).length > 0 && (
                 <div className="flex justify-center mt-24">
-                  <button className="px-12 py-4 border border-foreground/20 text-foreground font-bold tracking-[0.2em] hover:bg-foreground hover:text-background transition-all duration-500 text-xs uppercase shadow-[0_0_20px_rgba(255,255,255,0.05)] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)]">
-                    Load More
+                  {visibleCount < sortedProducts.length && (
+                  <button onClick={() => setVisibleCount(v => v + 12)} className="px-12 py-4 border border-foreground/20 text-foreground font-bold tracking-[0.2em] hover:bg-foreground hover:text-background transition-all duration-500 text-xs uppercase shadow-[0_0_20px_rgba(255,255,255,0.05)] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)]">
+                    Load More ({sortedProducts.length - visibleCount} remaining)
                   </button>
+                )}
                 </div>
               )}
 

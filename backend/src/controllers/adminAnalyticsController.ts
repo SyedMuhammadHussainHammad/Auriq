@@ -32,12 +32,12 @@ export const getAnalytics = async (req: Request, res: Response) => {
       returningCustomersData,
       recentOrdersData
     ] = await Promise.all([
-      prisma.order.aggregate({ _sum: { total: true }, where: { created_at: { gte: today }, payment_status: 'PAID' } }),
-      prisma.order.aggregate({ _sum: { total: true }, where: { created_at: { gte: startOfWeek }, payment_status: 'PAID' } }),
-      prisma.order.aggregate({ _sum: { total: true }, where: { created_at: { gte: startOfMonth }, payment_status: 'PAID' } }),
-      prisma.order.aggregate({ _sum: { total: true }, where: { created_at: { gte: startOfYear }, payment_status: 'PAID' } }),
-      prisma.order.count({ where: { payment_status: 'PAID' } }),
-      prisma.order.aggregate({ _sum: { total: true }, where: { payment_status: 'PAID' } }),
+      prisma.order.aggregate({ _sum: { total: true }, where: { created_at: { gte: today } } }),
+      prisma.order.aggregate({ _sum: { total: true }, where: { created_at: { gte: startOfWeek } } }),
+      prisma.order.aggregate({ _sum: { total: true }, where: { created_at: { gte: startOfMonth } } }),
+      prisma.order.aggregate({ _sum: { total: true }, where: { created_at: { gte: startOfYear } } }),
+      prisma.order.count(),
+      prisma.order.aggregate({ _sum: { total: true } }),
       prisma.user.count(),
       prisma.order.groupBy({ by: ['user_id'], _count: { id: true } }),
       prisma.order.findMany({
@@ -71,6 +71,7 @@ export const getAnalytics = async (req: Request, res: Response) => {
     const totalRevenue = totalRevenueData._sum.total || 0;
     const aov = totalOrdersData > 0 ? (Number(totalRevenue) / totalOrdersData).toFixed(2) : 0;
     const returningCustomers = returningCustomersData.filter(g => g._count.id > 1).length;
+    const pendingOrders = await prisma.order.count({ where: { status: "PENDING" } });
     const totalCustomers = totalCustomersData;
 
     // Top Selling Products
@@ -106,6 +107,7 @@ export const getAnalytics = async (req: Request, res: Response) => {
         revenueYear,
         totalRevenue,
         totalOrders: totalOrdersData,
+        pendingOrders,
         totalCustomers,
         averageOrderValue: Number(aov),
         returningCustomers,
