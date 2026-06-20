@@ -44,18 +44,14 @@ export default function AdminLayout({
     { type: 'header', name: 'MARKETING' },
     { type: 'link', name: "Banners & Ads", href: "/admin/ads", icon: Image },
     { type: 'link', name: "Newsletter", href: "/admin/newsletter", icon: Mail },
-    { type: 'link', name: "Campaigns", href: "/admin/campaigns", icon: Star },
-    { type: 'link', name: "Gift Sets", href: "/admin/gift-sets", icon: Gift },
     { type: 'link', name: "Rewards", href: "/admin/rewards", icon: Award },
 
     { type: 'header', name: 'CONTENT MANAGEMENT' },
     { type: 'link', name: "Homepage CMS", href: "/admin/homepage", icon: Store },
     { type: 'link', name: "Contact CMS", href: "/admin/contact", icon: Mail },
-    { type: 'link', name: "Footer CMS", href: "/admin/footer", icon: Settings },
     { type: 'link', name: "Media Library", href: "/admin/media", icon: Image },
 
     { type: 'header', name: 'BUSINESS' },
-    { type: 'link', name: "Reports", href: "/admin/reports", icon: PieChart },
     { type: 'link', name: "Audit Logs", href: "/admin/audit-logs", icon: FileText },
 
     { type: 'header', name: 'SYSTEM' },

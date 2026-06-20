@@ -21,6 +21,23 @@ export default function CollectionsClient({ initialProducts }: { initialProducts
   
   const [products] = useState<any[]>(initialProducts);
   const [search, setSearch] = useState(searchQuery);
+  const [priceFilters, setPriceFilters] = useState<string[]>([]);
+  const [familyFilters, setFamilyFilters] = useState<string[]>([]);
+  const [genderFilters, setGenderFilters] = useState<string[]>([]);
+  const [brandFilters, setBrandFilters] = useState<string[]>([]);
+
+  const toggleArrayFilter = (arr: string[], setArr: (v: string[]) => void, value: string) => {
+    setArr(arr.includes(value) ? arr.filter(v => v !== value) : [...arr, value]);
+  };
+
+  const matchesPriceRange = (price: number, label: string) => {
+    if (label === 'Under Rs. 10,000') return price < 10000;
+    if (label === 'Rs. 10,000 - Rs. 15,000') return price >= 10000 && price <= 15000;
+    if (label === 'Rs. 15,000 - Rs. 20,000') return price > 15000 && price <= 20000;
+    if (label === 'Over Rs. 20,000') return price > 20000;
+    return false;
+  };
+
   const [visibleCount, setVisibleCount] = useState(12);
 
   useEffect(() => {
@@ -47,7 +64,20 @@ export default function CollectionsClient({ initialProducts }: { initialProducts
     }
   };
 
-  const filteredProducts = products.filter(p => !search || p.name.toLowerCase().includes(search.toLowerCase()) || (p.brand || "").toLowerCase().includes(search.toLowerCase()));
+  const filteredProducts = products.filter(p => {
+    const matchesSearch = !search || p.name.toLowerCase().includes(search.toLowerCase()) || (p.brand || "").toLowerCase().includes(search.toLowerCase());
+
+    const price = Number(p.variants?.[0]?.price || 0);
+    const matchesPrice = priceFilters.length === 0 || priceFilters.some(label => matchesPriceRange(price, label));
+
+    const matchesFamily = familyFilters.length === 0 || familyFilters.some(f => (p.fragrance_type || "").toLowerCase() === f.toLowerCase());
+
+    const matchesGender = genderFilters.length === 0 || genderFilters.some(g => (p.gender || "").toLowerCase() === g.toLowerCase());
+
+    const matchesBrand = brandFilters.length === 0 || brandFilters.some(b => (p.brand || "").toLowerCase() === b.toLowerCase());
+
+    return matchesSearch && matchesPrice && matchesFamily && matchesGender && matchesBrand;
+  });
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     const priceA = Number(a.variants?.[0]?.price || 0);
@@ -76,7 +106,7 @@ export default function CollectionsClient({ initialProducts }: { initialProducts
     <div className="flex flex-col gap-6 w-full">
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-xl font-serif text-gradient-gold font-bold tracking-widest">Filters</h3>
-        <button className="text-[10px] text-foreground/50 hover:text-foreground uppercase tracking-[0.2em] transition-colors">Clear All</button>
+        <button onClick={() => { setPriceFilters([]); setFamilyFilters([]); setGenderFilters([]); setBrandFilters([]); }} className="text-[10px] text-foreground/50 hover:text-foreground uppercase tracking-[0.2em] transition-colors">Clear All</button>
       </div>
 
       {/* Price Filter */}
@@ -92,7 +122,7 @@ export default function CollectionsClient({ initialProducts }: { initialProducts
           <div className="flex flex-col gap-4">
             {['Under Rs. 10,000', 'Rs. 10,000 - Rs. 15,000', 'Rs. 15,000 - Rs. 20,000', 'Over Rs. 20,000'].map(label => (
               <label key={label} className="flex items-center gap-4 cursor-pointer group">
-                <input type="checkbox" className="accent-[#d4af37] w-4 h-4 bg-transparent border-foreground/30 cursor-pointer" />
+                <input type="checkbox" checked={priceFilters.includes(label)} onChange={() => toggleArrayFilter(priceFilters, setPriceFilters, label)} className="accent-[#d4af37] w-4 h-4 bg-transparent border-foreground/30 cursor-pointer" />
                 <span className="text-sm text-foreground/60 group-hover:text-foreground transition-colors tracking-wide font-semibold">{label}</span>
               </label>
             ))}
@@ -113,7 +143,7 @@ export default function CollectionsClient({ initialProducts }: { initialProducts
           <div className="flex flex-col gap-4">
             {['Woody', 'Fresh', 'Oriental', 'Floral', 'Leather', 'Citrus'].map(label => (
               <label key={label} className="flex items-center gap-4 cursor-pointer group">
-                <input type="checkbox" className="accent-[#d4af37] w-4 h-4 bg-transparent border-foreground/30 cursor-pointer" />
+                <input type="checkbox" checked={familyFilters.includes(label)} onChange={() => toggleArrayFilter(familyFilters, setFamilyFilters, label)} className="accent-[#d4af37] w-4 h-4 bg-transparent border-foreground/30 cursor-pointer" />
                 <span className="text-sm text-foreground/60 group-hover:text-foreground transition-colors tracking-wide font-semibold">{label}</span>
               </label>
             ))}
@@ -132,12 +162,14 @@ export default function CollectionsClient({ initialProducts }: { initialProducts
         </button>
         <div className={`overflow-hidden transition-all duration-300 ${expandedFilters.gender ? 'max-h-40 mt-5' : 'max-h-0'}`}>
           <div className="flex flex-col gap-4">
-            {['Men', 'Women', 'Unisex'].map(label => (
+            {['Men', 'Women', 'Unisex'].map(label => {
+              const genderValue = label === 'Men' ? 'MALE' : label === 'Women' ? 'FEMALE' : 'UNISEX';
+              return (
               <label key={label} className="flex items-center gap-4 cursor-pointer group">
-                <input type="checkbox" className="accent-[#d4af37] w-4 h-4 bg-transparent border-foreground/30 cursor-pointer" />
+                <input type="checkbox" checked={genderFilters.includes(genderValue)} onChange={() => toggleArrayFilter(genderFilters, setGenderFilters, genderValue)} className="accent-[#d4af37] w-4 h-4 bg-transparent border-foreground/30 cursor-pointer" />
                 <span className="text-sm text-foreground/60 group-hover:text-foreground transition-colors tracking-wide font-semibold">{label}</span>
               </label>
-            ))}
+            )})}
           </div>
         </div>
       </div>
@@ -176,7 +208,7 @@ export default function CollectionsClient({ initialProducts }: { initialProducts
           <div className="flex flex-col gap-4">
             {['Auriq'].map(label => (
               <label key={label} className="flex items-center gap-4 cursor-pointer group">
-                <input type="checkbox" className="accent-[#d4af37] w-4 h-4 bg-transparent border-foreground/30 cursor-pointer" />
+                <input type="checkbox" checked={brandFilters.includes(label)} onChange={() => toggleArrayFilter(brandFilters, setBrandFilters, label)} className="accent-[#d4af37] w-4 h-4 bg-transparent border-foreground/30 cursor-pointer" />
                 <span className="text-sm text-foreground/60 group-hover:text-foreground transition-colors tracking-wide font-semibold">{label}</span>
               </label>
             ))}
