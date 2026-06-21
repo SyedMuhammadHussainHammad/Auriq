@@ -142,10 +142,19 @@ export default function AdminProducts() {
 
     const price = formData.get("price");
     const stock = formData.get("stock_quantity");
-    const existingVariant = editingProduct.variants?.[0];
+    const existingVariants = editingProduct.variants || [];
+    const variants = existingVariants.map((v: any, i: number) => ({
+      id: v.id,
+      size_ml: Number((formData.get(`variant_size_${i}`) as string) || v.size_ml || 100),
+      price: Number((formData.get(`variant_price_${i}`) as string) || v.price || 0),
+      stock_quantity: Number((formData.get(`variant_stock_${i}`) as string) || v.stock_quantity || 0),
+      sku: v.sku || `AQ-${Math.floor(Math.random() * 10000)}`
+    }));
+    // fallback single variant
+    const existingVariant = existingVariants[0] || {};
     const variant = {
       id: existingVariant?.id,
-      size_ml: existingVariant?.size_ml || 100,
+      size_ml: Number((formData.get("variant_size_0") as string) || existingVariant?.size_ml || 100),
       price: Number(price),
       stock_quantity: Number(stock),
       sku: existingVariant?.sku || `AQ-${Math.floor(Math.random() * 10000)}`
@@ -328,13 +337,22 @@ export default function AdminProducts() {
         <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Category ID</label>
         <input type="number" name="category_id" placeholder="1" className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground" required />
       </div>
-      <div className="flex flex-col gap-2">
-        <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Price (Rs.)</label>
-        <input type="number" name="price" placeholder="15000" className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground" required />
-      </div>
-      <div className="flex flex-col gap-2">
-        <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Stock Quantity</label>
-        <input type="number" name="stock_quantity" placeholder="50" className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground" required />
+      <div className="flex flex-col gap-2 md:col-span-2">
+        <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Variants (Size / Price / Stock)</label>
+        <div className="grid grid-cols-3 gap-3 p-3 border border-foreground/10 rounded-lg">
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] text-foreground/40 uppercase tracking-widest">Size (ml)</span>
+            <input type="number" name="size_ml" placeholder="100" defaultValue={100} className="bg-transparent border border-foreground/20 rounded-lg px-3 py-2 text-sm focus:border-gold outline-none text-foreground" required />
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] text-foreground/40 uppercase tracking-widest">Price (Rs.)</span>
+            <input type="number" name="price" placeholder="2000" className="bg-transparent border border-foreground/20 rounded-lg px-3 py-2 text-sm focus:border-gold outline-none text-foreground" required />
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] text-foreground/40 uppercase tracking-widest">Stock</span>
+            <input type="number" name="stock_quantity" placeholder="50" className="bg-transparent border border-foreground/20 rounded-lg px-3 py-2 text-sm focus:border-gold outline-none text-foreground" required />
+          </div>
+        </div>
       </div>
       <div className="flex flex-col gap-2 md:col-span-2">
         <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Description</label>
@@ -377,13 +395,26 @@ export default function AdminProducts() {
           <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Category ID</label>
           <input type="number" name="category_id" defaultValue={editingProduct.category_id} className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground" required />
         </div>
-        <div className="flex flex-col gap-2">
-          <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Price (Rs.)</label>
-          <input type="number" name="price" defaultValue={editingProduct.variants?.[0]?.price} className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground" required />
-        </div>
-        <div className="flex flex-col gap-2">
-          <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Stock Quantity</label>
-          <input type="number" name="stock_quantity" defaultValue={editingProduct.variants?.[0]?.stock_quantity} className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground" required />
+        <div className="flex flex-col gap-2 md:col-span-2">
+          <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Variants (Size / Price / Stock)</label>
+          <div className="flex flex-col gap-3">
+            {(editingProduct.variants || [{ size_ml: 100, price: 0, stock_quantity: 0 }]).map((v: any, i: number) => (
+              <div key={i} className="grid grid-cols-3 gap-3 p-3 border border-foreground/10 rounded-lg">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] text-foreground/40 uppercase tracking-widest">Size (ml)</span>
+                  <input type="number" name={`variant_size_${i}`} defaultValue={v.size_ml} className="bg-transparent border border-foreground/20 rounded-lg px-3 py-2 text-sm focus:border-gold outline-none text-foreground" />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] text-foreground/40 uppercase tracking-widest">Price (Rs.)</span>
+                  <input type="number" name={`variant_price_${i}`} defaultValue={v.price} className="bg-transparent border border-foreground/20 rounded-lg px-3 py-2 text-sm focus:border-gold outline-none text-foreground" />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] text-foreground/40 uppercase tracking-widest">Stock</span>
+                  <input type="number" name={`variant_stock_${i}`} defaultValue={v.stock_quantity} className="bg-transparent border border-foreground/20 rounded-lg px-3 py-2 text-sm focus:border-gold outline-none text-foreground" />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
         <div className="flex flex-col gap-2 md:col-span-2">
           <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Description</label>

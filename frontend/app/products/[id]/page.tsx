@@ -7,6 +7,8 @@ import ProductDetailsClient from "../../components/product/ProductDetailsClient"
 import ProductReviews from "../../components/product/ProductReviews";
 import { productService } from "../../services/productService";
 
+export const dynamic = 'force-dynamic';
+
 async function getProduct(id: string) {
   try {
     const response = await productService.getProductById(id);

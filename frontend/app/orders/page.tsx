@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
@@ -9,7 +9,7 @@ import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import { getMyOrders } from "../services/orderService";
 
-export default function OrdersPage() {
+function OrdersContent() {
   const searchParams = useSearchParams();
   const addedLoyalty = searchParams.get('loyalty') === 'true';
 
@@ -155,5 +155,13 @@ export default function OrdersPage() {
       </main>
       <Footer />
     </>
+  );
+}
+
+export default function OrdersPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-perfume-main flex items-center justify-center"><div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin"></div></div>}>
+      <OrdersContent />
+    </Suspense>
   );
 }
