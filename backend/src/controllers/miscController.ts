@@ -1,4 +1,5 @@
 import { Request, Response } from 'express'
+import { sendNewsletterConfirmation, sendContactNotification } from '../services/emailService';
 import prisma from '../config/database'
 import { UserAuthRequest } from '../middleware/authMiddleware'
 
@@ -14,6 +15,7 @@ export const subscribeNewsletter = async (req: Request, res: Response) => {
       update: {},
       create: { email }
     })
+    sendNewsletterConfirmation(email).catch(console.error);
     res.json({ success: true, message: 'Subscribed successfully' })
   } catch (error) {
     console.error('NEWSLETTER ERROR:', error)
@@ -43,6 +45,7 @@ export const submitContact = async (req: Request, res: Response) => {
     await prisma.contactMessage.create({
       data: { name, email, phone, subject, message }
     })
+    sendContactNotification({ name, email, subject, message }).catch(console.error);
     res.json({ success: true, message: 'Message sent successfully' })
   } catch (error) {
     console.error('CONTACT ERROR:', error)

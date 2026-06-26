@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { sendOrderStatusUpdate } from '../services/emailService';
 import prisma from '../config/database';
 import { logAdminAction } from '../utils/auditLog';
 
@@ -31,6 +32,10 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 
     await logAdminAction((req as any).admin.id, 'UPDATE_ORDER_STATUS', 'Order', order.id, null, { status });
 
+    const fullOrder = await prisma.order.findUnique({ where: { id: order.id }, include: { user: { select: { name: true, email: true } } } });
+    const recipientEmail = fullOrder?.user?.email || fullOrder?.guest_email;
+    const recipientName = fullOrder?.user?.name || fullOrder?.guest_name || 'Valued Customer';
+    if (recipientEmail) sendOrderStatusUpdate(fullOrder, recipientEmail, recipientName, status.toUpperCase()).catch(console.error);
     res.json({ success: true, data: order });
   } catch (error) {
     console.error('UPDATE ORDER STATUS ERROR:', error);

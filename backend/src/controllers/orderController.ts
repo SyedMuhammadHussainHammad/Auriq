@@ -1,4 +1,5 @@
 import { Response } from 'express';
+// email sent when admin confirms order, not on placement
 import prisma from '../config/database';
 import { UserAuthRequest } from '../middleware/authMiddleware';
 
@@ -149,7 +150,7 @@ export const createOrder = async (req: UserAuthRequest, res: Response): Promise<
             create: orderItemsData
           }
         },
-        include: { items: true }
+        include: { items: true, user: { select: { email: true, name: true } } }
       });
 
       // Update discount usage
@@ -174,6 +175,12 @@ export const createOrder = async (req: UserAuthRequest, res: Response): Promise<
       return order;
     });
 
+    // const customerEmail = result.guest_email || '';
+    // const customerName = result.guest_name || 'Valued Customer';
+    // if (customerEmail) 
+    // {
+    //   sendOrderConfirmation(result, customerEmail, customerName).catch(console.error);
+    // }
     res.json({ success: true, data: result });
   } catch (error: any) {
     console.error('Error creating order:', error);
