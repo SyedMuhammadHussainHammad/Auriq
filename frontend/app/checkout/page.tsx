@@ -141,7 +141,7 @@ export default function CheckoutPage() {
                 Thank you for your purchase. Your order #AUR-{orderId} has been received and is being processed.
               </p>
               <div className="flex gap-4 w-full max-w-sm">
-                <Link href={isGuest ? "/invoice" : "/orders"} className="flex-1 bg-transparent border border-foreground/20 text-foreground py-4 text-sm font-bold tracking-widest hover:border-gold hover:text-gold transition-colors uppercase flex justify-center items-center">View Order</Link>
+                <Link href={isGuest ? `/invoice/${orderId}` : "/orders"} className="flex-1 bg-transparent border border-foreground/20 text-foreground py-4 text-sm font-bold tracking-widest hover:border-gold hover:text-gold transition-colors uppercase flex justify-center items-center">View Order</Link>
                 <Link href="/collections" className="flex-1 bg-gold/90 text-background py-4 text-sm font-bold tracking-widest hover:bg-foreground transition-colors uppercase flex justify-center items-center">Continue</Link>
               </div>
             </div>
