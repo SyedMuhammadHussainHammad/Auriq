@@ -101,7 +101,7 @@ export default function WishlistPage() {
           ) : wishlistItems.length === 0 ? (
             <div className="text-center p-16 lux-glass-card">
               <p className="text-foreground/60 mb-6">Your wishlist is currently empty.</p>
-              <Link href="/products" className="bg-gold text-background px-8 py-3 text-xs font-bold tracking-[0.2em] uppercase hover:bg-foreground transition-colors inline-block">
+              <Link href="/collections" className="bg-gold text-background px-8 py-3 text-xs font-bold tracking-[0.2em] uppercase hover:bg-foreground transition-colors inline-block">
                 Explore Fragrances
               </Link>
             </div>

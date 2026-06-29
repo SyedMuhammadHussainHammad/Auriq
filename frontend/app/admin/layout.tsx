@@ -76,6 +76,37 @@ export default function AdminLayout({
     }
   }, [pathname, router]);
 
+  // 15-minute inactivity timeout
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
+    const resetTimer = () => {
+      clearTimeout(timeoutId);
+      // 15 minutes = 15 * 60 * 1000 = 900000 ms
+      timeoutId = setTimeout(() => {
+        if (pathname !== '/admin/login' && adminAuthService.getToken()) {
+          adminAuthService.logout();
+        }
+      }, 900000);
+    };
+
+    if (isAuthenticated && pathname !== '/admin/login') {
+      resetTimer();
+      window.addEventListener('mousemove', resetTimer);
+      window.addEventListener('keypress', resetTimer);
+      window.addEventListener('click', resetTimer);
+      window.addEventListener('scroll', resetTimer);
+    }
+
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('mousemove', resetTimer);
+      window.removeEventListener('keypress', resetTimer);
+      window.removeEventListener('click', resetTimer);
+      window.removeEventListener('scroll', resetTimer);
+    };
+  }, [isAuthenticated, pathname]);
+
   if (!isAuthenticated) return <div className="h-screen bg-background flex items-center justify-center"><div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin"></div></div>;
 
   if (pathname === '/admin/login') {
@@ -131,7 +162,7 @@ export default function AdminLayout({
         <header className="h-20 border-b border-foreground/10 bg-background/50 backdrop-blur-xl flex items-center justify-between px-8 z-10">
           <div className="flex items-center gap-4 flex-1"></div>
           <div className="flex items-center gap-6 relative">
-            <Link href="/admin/messages" className="text-foreground/60 hover:text-gold transition-colors relative">
+            <Link href="/admin/messages" aria-label="Messages" className="text-foreground/60 hover:text-gold transition-colors relative">
               <Bell className="w-5 h-5" />
               {hasUnread && (
                 <span className="absolute -top-1 -right-1 w-2 h-2 bg-gold rounded-full"></span>
@@ -139,6 +170,7 @@ export default function AdminLayout({
             </Link>
             
             <button 
+              aria-label="Profile Menu"
               onClick={() => {
                 const el = document.getElementById('profile-dropdown');
                 if (el) el.classList.toggle('hidden');

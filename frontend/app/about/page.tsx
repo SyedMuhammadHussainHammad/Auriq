@@ -1,5 +1,6 @@
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
+import Image from "next/image";
 
 export const metadata = {
   title: "About Us | Auriq Perfumery",
@@ -30,7 +31,7 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-24 items-center mb-32">
             <div className="lux-glass-card !bg-gold p-2 aspect-[4/5] relative overflow-hidden group">
               <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent z-10"></div>
-              <img src="/about_us_2.png" alt="Auriq Perfume Crafting" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
+              <Image src="/about_us_2.png" alt="Auriq Perfume Crafting" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover transition-transform duration-1000 group-hover:scale-105" />
             </div>
             <div className="flex flex-col gap-6">
               <h2 className="text-3xl font-serif text-foreground font-bold tracking-widest">Masterfully Crafted</h2>
@@ -55,7 +56,7 @@ export default function AboutPage() {
             </div>
             <div className="lux-glass-card !bg-gold p-2 aspect-[4/5] relative overflow-hidden group order-1 md:order-2">
               <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent z-10"></div>
-              <img src="/about_us_1.png" alt="Auriq Perfume Bottle" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
+              <Image src="/about_us_1.png" alt="Auriq Perfume Bottle" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover transition-transform duration-1000 group-hover:scale-105" />
             </div>
           </div>
 

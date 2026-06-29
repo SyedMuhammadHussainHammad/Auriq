@@ -108,6 +108,7 @@ export default function Header() {
           <div className="relative w-full">
             <input
               type="text"
+              aria-label="Search fragrances"
               placeholder="Search fragrances..."
               className="w-full bg-transparent border border-foreground/20 rounded-full py-2 !pl-10 pr-4 focus:outline-none focus:border-gold transition-colors text-sm"
               onKeyDown={(e) => {

@@ -21,7 +21,7 @@ export default function Footer() {
           {/* Column 2: Shop */}
           <div>
             <h4 className="font-serif text-lg mb-6 text-white">Shop</h4>
-            <ul className="space-y-4 text-sm text-gray-400">
+            <ul className="space-y-4 text-sm text-gray-300">
               <li><Link href="/collections" className="hover:text-gold transition-colors">All Collections</Link></li>
               <li><Link href="/collections?sort=best-sellers" className="hover:text-gold transition-colors">Best Sellers</Link></li>
               <li><Link href="/collections?sort=new-arrivals" className="hover:text-gold transition-colors">New Arrivals</Link></li>
@@ -32,7 +32,7 @@ export default function Footer() {
           {/* Column 3: Support */}
           <div>
             <h4 className="font-serif text-lg mb-6 text-white">Support</h4>
-            <ul className="space-y-4 text-sm text-gray-400">
+            <ul className="space-y-4 text-sm text-gray-300">
               <li><Link href="/contact" className="hover:text-gold transition-colors">Contact Us</Link></li>
               <li><Link href="/shipping-policy" className="hover:text-gold transition-colors">Shipping Policy</Link></li>
               <li><Link href="/return-policy" className="hover:text-gold transition-colors">Return Policy</Link></li>
@@ -43,7 +43,7 @@ export default function Footer() {
           {/* Column 4: Newsletter */}
           <div>
             <h4 className="font-serif text-lg mb-6 text-white">Newsletter</h4>
-            <p className="text-gray-400 text-sm mb-4">
+            <p className="text-gray-300 text-sm mb-4">
               Subscribe to receive updates, access to exclusive deals, and more.
             </p>
             <NewsletterForm />
@@ -51,7 +51,7 @@ export default function Footer() {
         </div>
 
         {/* Bottom Footer */}
-        <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between text-xs text-gray-500">
+        <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between text-xs text-gray-400">
           <p>&copy; {new Date().getFullYear()} Auriq. All rights reserved.</p>
           <div className="flex gap-6 mt-4 md:mt-0">
             <Link href="https://www.instagram.com/auriqfragrances?igsh=MXByeTJybmZhNnQxbQ==" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Instagram</Link>

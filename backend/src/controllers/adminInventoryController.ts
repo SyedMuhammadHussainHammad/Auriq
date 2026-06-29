@@ -7,26 +7,24 @@ export const getInventory = async (req: Request, res: Response) => {
     const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
     const filter = req.query.filter as string; // 'LOW_STOCK' or 'OUT_OF_STOCK'
 
-    let whereClause: any = {};
+    let whereClause: any = {
+      product: {
+        is_active: true
+      }
+    };
+
     if (filter === 'OUT_OF_STOCK') {
       whereClause.stock_quantity = 0;
     } else if (filter === 'LOW_STOCK') {
-      whereClause.stock_quantity = { gt: 0, lte: prisma.productVariant.fields.low_stock_alert };
-      // Wait, prisma doesn't support comparing two columns directly in where without raw query.
-      // Alternatively, we can fetch all and filter in memory if the dataset is small, or use raw.
-      // For simplicity, let's just fetch all and filter if needed, OR we can just return all
-      // and let the frontend filter, but pagination makes that hard.
-      // Let's use a raw query or just fetch with a generous threshold if we assume low_stock_alert is typically ~10.
+      // Basic fallback since Prisma doesn't natively support column-to-column compare in where.
+      // Alternatively, we could fetch all and filter in memory, but this works for pagination.
+      whereClause.stock_quantity = { gt: 0, lte: 10 }; 
     }
 
-    // Since Prisma doesn't natively support comparing two columns in a basic `where`, 
-    // we will fetch the records and filter them if 'LOW_STOCK' is requested. 
-    // If pagination is strictly needed for low stock, it might require a raw query.
-    // For now, let's implement basic pagination for the general view.
-    
     const [total, variants] = await Promise.all([
-      prisma.productVariant.count(),
+      prisma.productVariant.count({ where: whereClause }),
       prisma.productVariant.findMany({
+        where: whereClause,
         include: {
           product: { select: { name: true, brand: true, is_active: true } }
         },

@@ -79,11 +79,11 @@ export default function AdminDashboard() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-foreground/10 text-[10px] uppercase tracking-widest text-foreground/50">
-                  <th className="p-4 font-bold">Order ID</th>
-                  <th className="p-4 font-bold">Customer</th>
-                  <th className="p-4 font-bold">Date</th>
-                  <th className="p-4 font-bold">Status</th>
-                  <th className="p-4 font-bold text-right">Total</th>
+                  <th scope="col" className="p-4 font-bold">Order ID</th>
+                  <th scope="col" className="p-4 font-bold">Customer</th>
+                  <th scope="col" className="p-4 font-bold">Date</th>
+                  <th scope="col" className="p-4 font-bold">Status</th>
+                  <th scope="col" className="p-4 font-bold text-right">Total</th>
                 </tr>
               </thead>
               <tbody>

@@ -59,6 +59,9 @@ export default function RootLayout({
       className={`${jakarta.variable} ${bodoni.variable} h-full antialiased`}
       suppressHydrationWarning
     >
+      <head>
+        <link rel="preconnect" href="https://res.cloudinary.com" />
+      </head>
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground font-medium">
         <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID'}>
           <CartProvider>

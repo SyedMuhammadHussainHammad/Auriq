@@ -235,8 +235,7 @@ input:focus, textarea:focus, select:focus {
   background-clip: text;
   background-size: 200% auto;
   animation: fluid-bg 6s linear infinite;
-  padding-bottom: 0.15em;
-  margin-bottom: -0.15em;
+  line-height: 1.2;
 }
 @keyframes fluid-bg {
   0% { background-position: 0% 50%; }

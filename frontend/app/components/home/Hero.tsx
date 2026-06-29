@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import PromotionalCards from "./PromotionalCards";
 import { publicSettingsService } from "../../services/publicSettingsService";
 
@@ -31,22 +32,30 @@ export default function Hero({ ads = [], settings = {} }: { ads?: any[], setting
             muted 
             loop 
             playsInline
+            aria-hidden="true"
+            tabIndex={-1}
             className="object-cover w-full h-full"
           >
             <source src={videoUrl} type="video/mp4" />
           </video>
         ) : bgImage ? (
-          <img src={bgImage} alt="Hero Background" className="object-cover w-full h-full" />
+          <Image src={bgImage} alt="Hero Background" fill priority className="object-cover" />
         ) : null}
         <div className="absolute inset-0 bg-black/50"></div>
       </div>
 
       {/* Hero Content */}
       <div className="relative z-10 container-lux flex-1 flex flex-col items-center justify-center text-center mt-12 mb-16">
-        <h1 className="text-6xl md:text-8xl lg:text-[9rem] font-serif font-bold text-gradient-gold tracking-widest mb-2 drop-shadow-lg uppercase">
-          {title}
-        </h1>
-        <h2 className="text-xl md:text-2xl font-serif text-gold italic mb-6">
+        <div className="relative w-[95%] sm:w-[90%] max-w-5xl md:max-w-6xl lg:max-w-screen-2xl h-48 md:h-64 lg:h-96 mb-8 mt-6" style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}>
+          <Image 
+            src="/hero-logo.png" 
+            alt={title}
+            fill
+            className="object-contain"
+            priority
+          />
+        </div>
+        <h2 className="text-xl md:text-2xl font-serif text-gold italic mb-6 drop-shadow-md">
           {subtitle}
         </h2>
         <p className="max-w-2xl text-white/90 text-sm md:text-base leading-relaxed mb-10 drop-shadow-md">

@@ -5,8 +5,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronRight, ShieldCheck, CreditCard, Truck, CheckCircle2, User, UserX } from "lucide-react";
+import dynamic from "next/dynamic";
 import Header from "../components/layout/Header";
-import Footer from "../components/layout/Footer";
+const Footer = dynamic(() => import("../components/layout/Footer"), { ssr: false });
 import { useCart } from "../context/CartContext";
 import { createOrder } from "../services/orderService";
 import { API_URL, apiFetch } from "../utils/api";
@@ -186,14 +187,14 @@ export default function CheckoutPage() {
                       </h2>
                       <div className="lux-glass-card p-6 md:p-8 flex flex-col gap-6">
                         <div className="flex flex-col gap-2 group">
-                          <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">Email Address</label>
-                          <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors placeholder:text-foreground/20 text-foreground font-medium tracking-wide" />
+                          <label htmlFor="email" className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">Email Address</label>
+                          <input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors placeholder:text-foreground/20 text-foreground font-medium tracking-wide" />
                         </div>
                         <div className="flex flex-col gap-2 group">
-                          <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">Phone Number</label>
+                          <label htmlFor="phone" className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">Phone Number</label>
                           <div className="relative flex items-center">
                             <span className="absolute left-4 text-foreground/50 text-sm font-medium">+92</span>
-                            <input type="tel" required value={phone.replace(/^\+92/, '')} onChange={(e) => {
+                            <input id="phone" type="tel" required value={phone.replace(/^\+92/, '')} onChange={(e) => {
                               const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
                               setPhone(digits ? `+92${digits}` : '');
                             }} placeholder="300 123 4567" pattern="^\d{10}$" title="Must be exactly 10 digits" className="w-full bg-transparent border-b border-foreground/20 py-2 !pl-14 text-sm focus:outline-none focus:border-gold transition-colors placeholder:text-foreground/20 text-foreground font-medium tracking-wide" />
@@ -209,28 +210,28 @@ export default function CheckoutPage() {
                       <div className="lux-glass-card p-6 md:p-8">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="flex flex-col gap-2 group">
-                            <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">First Name</label>
-                            <input type="text" required value={firstName} onChange={(e) => setFirstName(e.target.value)} className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground font-medium tracking-wide" />
+                            <label htmlFor="firstName" className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">First Name</label>
+                            <input id="firstName" type="text" required value={firstName} onChange={(e) => setFirstName(e.target.value)} className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground font-medium tracking-wide" />
                           </div>
                           <div className="flex flex-col gap-2 group">
-                            <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">Last Name</label>
-                            <input type="text" required value={lastName} onChange={(e) => setLastName(e.target.value)} className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground font-medium tracking-wide" />
+                            <label htmlFor="lastName" className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">Last Name</label>
+                            <input id="lastName" type="text" required value={lastName} onChange={(e) => setLastName(e.target.value)} className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground font-medium tracking-wide" />
                           </div>
                           <div className="flex flex-col gap-2 group md:col-span-2">
-                            <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">Address</label>
-                            <input type="text" required value={street} onChange={(e) => setStreet(e.target.value)} placeholder="Street address, P.O. box, etc." className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors placeholder:text-foreground/20 text-foreground font-medium tracking-wide" />
+                            <label htmlFor="street" className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">Address</label>
+                            <input id="street" type="text" required value={street} onChange={(e) => setStreet(e.target.value)} placeholder="Street address, P.O. box, etc." className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors placeholder:text-foreground/20 text-foreground font-medium tracking-wide" />
                           </div>
                           <div className="flex flex-col gap-2 group">
-                            <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">City</label>
-                            <input type="text" required value={city} onChange={(e) => setCity(e.target.value)} className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground font-medium tracking-wide" />
+                            <label htmlFor="city" className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">City</label>
+                            <input id="city" type="text" required value={city} onChange={(e) => setCity(e.target.value)} className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground font-medium tracking-wide" />
                           </div>
                           <div className="flex flex-col gap-2 group">
-                            <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">Postal Code</label>
-                            <input type="text" required value={postalCode} onChange={(e) => setPostalCode(e.target.value)} className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground font-medium tracking-wide" />
+                            <label htmlFor="postalCode" className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">Postal Code</label>
+                            <input id="postalCode" type="text" required value={postalCode} onChange={(e) => setPostalCode(e.target.value)} className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground font-medium tracking-wide" />
                           </div>
                           <div className="flex flex-col gap-2 group md:col-span-2">
-                            <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">Province</label>
-                            <select value={province} onChange={(e) => setProvince(e.target.value)} className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground font-medium tracking-wide appearance-none">
+                            <label htmlFor="province" className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">Province</label>
+                            <select id="province" value={province} onChange={(e) => setProvince(e.target.value)} className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground font-medium tracking-wide appearance-none">
                               <option value="Sindh" className="bg-background">Sindh</option>
                               <option value="Punjab" className="bg-background">Punjab</option>
                               <option value="KPK" className="bg-background">KPK</option>
@@ -338,7 +339,7 @@ export default function CheckoutPage() {
             {/* Right Column: Order Summary */}
             <div className="w-full lg:w-2/5">
               <div className="lux-glass-card p-6 md:p-8 sticky top-32">
-                <h3 className="text-lg font-serif text-foreground font-bold tracking-wide mb-6 pb-4 border-b border-foreground/10">Order Summary</h3>
+                <h2 className="text-lg font-serif text-foreground font-bold tracking-wide mb-6 pb-4 border-b border-foreground/10">Order Summary</h2>
                 <div className="flex flex-col gap-6 mb-8 max-h-[300px] overflow-y-auto pr-2">
                   {cartItems.map((item) => {
                     const price = item.variant ? Number(item.variant.discount_price || item.variant.price) : Number(item.bundle.price);
@@ -379,9 +380,9 @@ export default function CheckoutPage() {
                   )}
                 </div>
                 <div className="mb-6 border-b border-foreground/10 pb-6">
-                  <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium mb-2 block">Discount Code</label>
+                  <label htmlFor="discountCode" className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium mb-2 block">Discount Code</label>
                   <div className="flex gap-2">
-                    <input type="text" placeholder="Enter code" disabled={!!appliedDiscount || isValidatingDiscount} className="flex-1 bg-transparent border border-foreground/20 rounded p-3 text-sm focus:outline-none focus:border-gold transition-colors placeholder:text-foreground/30 text-foreground uppercase disabled:opacity-50" value={discountCodeInput} onChange={(e) => setDiscountCodeInput(e.target.value)} />
+                    <input id="discountCode" type="text" placeholder="Enter code" disabled={!!appliedDiscount || isValidatingDiscount} className="flex-1 bg-transparent border border-foreground/20 rounded p-3 text-sm focus:outline-none focus:border-gold transition-colors placeholder:text-foreground/30 text-foreground uppercase disabled:opacity-50" value={discountCodeInput} onChange={(e) => setDiscountCodeInput(e.target.value)} />
                     {appliedDiscount ? (
                       <button type="button" onClick={handleRemoveDiscount} className="bg-red-500/10 text-red-500 px-4 rounded text-sm font-bold tracking-widest hover:bg-red-500/20 transition-colors uppercase">Remove</button>
                     ) : (

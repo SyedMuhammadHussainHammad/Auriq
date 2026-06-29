@@ -1,26 +1,24 @@
-import { MetadataRoute } from 'next';
-
+import type { MetadataRoute } from 'next'
+ 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://auriqfragrances.com';
-
   return [
     {
-      url: baseUrl,
+      url: 'https://auriqfragrances.com',
       lastModified: new Date(),
       changeFrequency: 'yearly',
       priority: 1,
     },
     {
-      url: `${baseUrl}/collections`,
+      url: 'https://auriqfragrances.com/collections',
       lastModified: new Date(),
-      changeFrequency: 'monthly',
+      changeFrequency: 'weekly',
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/contact`,
+      url: 'https://auriqfragrances.com/about',
       lastModified: new Date(),
-      changeFrequency: 'yearly',
+      changeFrequency: 'monthly',
       priority: 0.5,
     },
-  ];
+  ]
 }

@@ -1,14 +1,12 @@
-import { MetadataRoute } from 'next';
-
+import type { MetadataRoute } from 'next'
+ 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = 'https://auriqfragrances.com';
-
   return {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/admin/', '/checkout/'],
+      disallow: '/admin/',
     },
-    sitemap: `${baseUrl}/sitemap.xml`,
-  };
+    sitemap: 'https://auriqfragrances.com/sitemap.xml',
+  }
 }
