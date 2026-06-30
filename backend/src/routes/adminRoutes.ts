@@ -94,7 +94,6 @@ router.get('/newsletters', getSubscribers);
 router.delete('/newsletters/:id', deleteSubscriber);
 router.get('/newsletters/export', exportSubscribersCSV);
 router.post('/newsletters/campaign', sendCampaign);
-router.get('/export/subscribers', exportSubscribersCSV);
 
 // Story (CMS)
 

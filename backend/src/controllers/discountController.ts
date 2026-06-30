@@ -41,7 +41,7 @@ export const validateDiscount = async (req: UserAuthRequest, res: Response): Pro
       return;
     }
 
-    // Check if user has already used this code
+    // Check if user/guest has already used this code
     if (userId) {
       const existingUse = await prisma.discountUse.findUnique({
         where: {
@@ -51,10 +51,20 @@ export const validateDiscount = async (req: UserAuthRequest, res: Response): Pro
           }
         }
       });
-
       if (existingUse) {
         res.status(400).json({ success: false, message: 'You have already used this discount code' });
         return;
+      }
+    } else {
+      const sessionId = req.headers['x-guest-session-id'] as string;
+      if (sessionId) {
+        const priorUse = await prisma.order.count({
+          where: { session_id: sessionId, discount_code: code.toUpperCase() }
+        });
+        if (priorUse > 0) {
+          res.status(400).json({ success: false, message: 'This discount code has already been used' });
+          return;
+        }
       }
     }
 

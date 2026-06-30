@@ -80,9 +80,9 @@ export const getAllProducts = async (req: Request, res: Response) => {
     const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
 
     const [total, products] = await Promise.all([
-      prisma.product.count({ where: { is_active: true } }),
+      prisma.product.count(),
       prisma.product.findMany({
-        where: { is_active: true },
+        where: {},
         include: {
           category: true,
           variants: true,
@@ -176,9 +176,9 @@ export const updateProduct = async (req: Request, res: Response) => {
       const variants = JSON.parse(variants_json)
       for (const v of variants) {
         if (v.id) {
-          // Update existing variant
+          // Update existing variant — include product_id to prevent cross-product mutation
           await prisma.productVariant.update({
-            where: { id: v.id },
+            where: { id: v.id, product_id: product.id },
             data: {
               size_ml: v.size_ml,
               price: v.price,

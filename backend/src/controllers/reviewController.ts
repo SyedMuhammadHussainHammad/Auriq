@@ -30,6 +30,18 @@ export const addReview = async (req: UserAuthRequest, res: Response) => {
       return;
     }
 
+    // Must have a confirmed/delivered order containing this product
+    const hasPurchased = await prisma.orderItem.findFirst({
+      where: {
+        variant: { product_id: Number(product_id) },
+        order: { user_id: userId, status: { in: ['CONFIRMED', 'DELIVERED'] } }
+      }
+    });
+    if (!hasPurchased) {
+      res.status(403).json({ success: false, message: 'You can only review products you have purchased' });
+      return;
+    }
+
     // Upsert the review (creates new or updates existing for the same user+product)
     const review = await prisma.review.upsert({
       where: {

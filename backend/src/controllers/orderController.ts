@@ -103,9 +103,12 @@ export const createOrder = async (req: UserAuthRequest, res: Response): Promise<
               }
             }
           });
-          if (existingUse) {
-            throw new Error('You have already used this discount code');
-          }
+          if (existingUse) throw new Error('You have already used this discount code');
+        } else if (sessionId) {
+          const priorUse = await tx.order.count({
+            where: { session_id: sessionId, discount_code: discountCode.toUpperCase() }
+          });
+          if (priorUse > 0) throw new Error('This discount code has already been used');
         }
 
         if (discount.type === 'PERCENTAGE') {

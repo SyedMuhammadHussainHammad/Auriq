@@ -81,6 +81,26 @@ export const addToCart = async (req: UserAuthRequest, res: Response): Promise<vo
       }
     });
 
+    if (variantId) {
+      const variant = await prisma.productVariant.findUnique({
+        where: { id: variantId },
+        select: { stock_quantity: true }
+      });
+      if (!variant) {
+        res.status(404).json({ success: false, message: 'Product variant not found' });
+        return;
+      }
+      const newQty = (existingItem?.quantity ?? 0) + quantity;
+      if (variant.stock_quantity <= 0) {
+        res.status(400).json({ success: false, message: 'This item is out of stock' });
+        return;
+      }
+      if (newQty > variant.stock_quantity) {
+        res.status(400).json({ success: false, message: `Only ${variant.stock_quantity} unit(s) available` });
+        return;
+      }
+    }
+
     if (existingItem) {
       // Update quantity
       await prisma.cartItem.update({
