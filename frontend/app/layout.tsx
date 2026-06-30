@@ -7,6 +7,7 @@ import { SettingsProvider } from './context/SettingsContext';
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { GoogleAnalytics } from "@next/third-parties/google";
+import { publicSettingsService } from "./services/publicSettingsService";
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
@@ -48,11 +49,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const initialSettings = await publicSettingsService.getSettingsByGroup("HOMEPAGE").catch(() => ({}));
+
   return (
     <html
       lang="en"
@@ -65,8 +68,8 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground font-medium">
         <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID'}>
           <CartProvider>
-            <SettingsProvider>
-            {children}
+            <SettingsProvider initialSettings={initialSettings}>
+              {children}
             </SettingsProvider>
             <Analytics />
             <SpeedInsights />

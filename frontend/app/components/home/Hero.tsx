@@ -4,12 +4,16 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import PromotionalCards from "./PromotionalCards";
-import { publicSettingsService } from "../../services/publicSettingsService";
 
-export default function Hero({ ads = [], settings = {} }: { ads?: any[], settings?: Record<string, string> }) {
-  // Use settings passed from server component to avoid hydration flashes
-  
-  // Hero section is forced to be visible based on user request
+export default function Hero({ settings = {} }: { settings?: Record<string, string> }) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const title = settings.HERO_TITLE || "AURIQ";
   const subtitle = settings.HERO_SUBTITLE || `"Essence In Motion"`;
@@ -18,19 +22,18 @@ export default function Hero({ ads = [], settings = {} }: { ads?: any[], setting
   const cta1Text = settings.HERO_CTA1_TEXT || "EXPLORE COLLECTION";
   const cta1Link = settings.HERO_CTA1_LINK || "/collections";
 
-  // Use CMS Background video or image, or fallback to default
-  const videoUrl = settings.HERO_VIDEO_URL || "/video.mp4";
+  const videoUrl = settings.HERO_VIDEO_URL || "https://res.cloudinary.com/dasozntqa/video/upload/f_auto,q_auto/v1782857916/video_zms4gn.mp4";
   const bgImage = settings.HERO_BG_IMAGE || null;
 
   return (
     <section id="hero" className="relative min-h-screen w-full flex flex-col justify-center overflow-hidden pt-10">
       {/* Background Video/Image with Overlay */}
       <div className="absolute inset-0 z-0">
-        {videoUrl ? (
-          <video 
-            autoPlay 
-            muted 
-            loop 
+        {!isMobile && videoUrl ? (
+          <video
+            autoPlay
+            muted
+            loop
             playsInline
             aria-hidden="true"
             tabIndex={-1}
@@ -40,7 +43,9 @@ export default function Hero({ ads = [], settings = {} }: { ads?: any[], setting
           </video>
         ) : bgImage ? (
           <Image src={bgImage} alt="Hero Background" fill priority className="object-cover" />
-        ) : null}
+        ) : (
+          <div className="absolute inset-0 bg-[#0a0a0a]" />
+        )}
         <div className="absolute inset-0 bg-black/50"></div>
       </div>
 

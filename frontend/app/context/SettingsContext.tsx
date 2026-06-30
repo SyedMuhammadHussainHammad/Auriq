@@ -1,16 +1,18 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
-import { publicSettingsService } from "../services/publicSettingsService";
+import { createContext, useContext, useState } from "react";
 
 const SettingsContext = createContext<Record<string, string>>({});
 
-export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettings] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    publicSettingsService.getSettingsByGroup("HOMEPAGE").then(setSettings).catch(console.error);
-  }, []);
+export function SettingsProvider({
+  children,
+  initialSettings = {},
+}: {
+  children: React.ReactNode;
+  initialSettings?: Record<string, string>;
+}) {
+  // Initialised with server-fetched data — no client-side fetch, no flash
+  const [settings] = useState<Record<string, string>>(initialSettings);
 
   return <SettingsContext.Provider value={settings}>{children}</SettingsContext.Provider>;
 }
