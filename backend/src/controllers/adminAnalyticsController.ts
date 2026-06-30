@@ -30,7 +30,10 @@ export const getAnalytics = async (req: Request, res: Response) => {
       totalRevenueData,
       totalCustomersData,
       returningCustomersData,
-      recentOrdersData
+      recentOrdersData,
+      pendingOrders,
+      orderItems,
+      ...trendResults
     ] = await Promise.all([
       prisma.order.aggregate({ _sum: { total: true }, where: { created_at: { gte: today } } }),
       prisma.order.aggregate({ _sum: { total: true }, where: { created_at: { gte: startOfWeek } } }),
@@ -39,30 +42,42 @@ export const getAnalytics = async (req: Request, res: Response) => {
       prisma.order.count(),
       prisma.order.aggregate({ _sum: { total: true } }),
       prisma.user.count(),
-      prisma.order.groupBy({ by: ['user_id'], _count: { id: true } }),
+      // Only fetch groups with more than 1 order — DB filters instead of loading all rows into memory
+      prisma.order.groupBy({
+        by: ['user_id'],
+        where: { user_id: { not: null } },
+        _count: { id: true },
+        having: { id: { _count: { gt: 1 } } }
+      }),
       prisma.order.findMany({
         take: 10,
         orderBy: { created_at: 'desc' },
-        include: { user: { select: { name: true, email: true } }, items: true }
+        include: { user: { select: { name: true, email: true } } }
+      }),
+      // Moved pendingOrders into this Promise.all to save a round-trip
+      prisma.order.count({ where: { status: 'PENDING' } }),
+      // Top products groupBy — runs in parallel with everything else
+      prisma.orderItem.groupBy({
+        by: ['variant_id'],
+        _sum: { quantity: true, total_price: true },
+        orderBy: { _sum: { quantity: 'desc' } },
+        take: 5
+      }),
+      // Sales trends for last 7 days — all in parallel with the rest
+      ...last7Days.map((date) => {
+        const nextDate = new Date(date);
+        nextDate.setDate(date.getDate() + 1);
+        return prisma.order.aggregate({
+          _sum: { total: true },
+          where: { created_at: { gte: date, lt: nextDate }, payment_status: 'PAID' }
+        });
       })
     ]);
 
-    // Compute sales trends manually since prisma doesn't have native day-by-day grouping easily without raw query
-    const trendDataPromises = last7Days.map(async (date) => {
-      const nextDate = new Date(date);
-      nextDate.setDate(date.getDate() + 1);
-      
-      const res = await prisma.order.aggregate({
-        _sum: { total: true },
-        where: { created_at: { gte: date, lt: nextDate }, payment_status: 'PAID' }
-      });
-      return {
-        date: date.toISOString().split('T')[0],
-        revenue: res._sum.total || 0
-      };
-    });
-    
-    const salesTrends = await Promise.all(trendDataPromises);
+    const salesTrends = last7Days.map((date, i) => ({
+      date: date.toISOString().split('T')[0],
+      revenue: trendResults[i]._sum.total || 0
+    }));
 
     const revenueToday = revenueTodayData._sum.total || 0;
     const revenueWeek = revenueWeekData._sum.total || 0;
@@ -70,33 +85,28 @@ export const getAnalytics = async (req: Request, res: Response) => {
     const revenueYear = revenueYearData._sum.total || 0;
     const totalRevenue = totalRevenueData._sum.total || 0;
     const aov = totalOrdersData > 0 ? (Number(totalRevenue) / totalOrdersData).toFixed(2) : 0;
-    const returningCustomers = returningCustomersData.filter(g => g._count.id > 1).length;
-    const pendingOrders = await prisma.order.count({ where: { status: "PENDING" } });
+    const returningCustomers = returningCustomersData.length;
     const totalCustomers = totalCustomersData;
 
-    // Top Selling Products
-    const orderItems = await prisma.orderItem.groupBy({
-      by: ['variant_id'],
-      _sum: { quantity: true, total_price: true },
-      orderBy: { _sum: { quantity: 'desc' } },
-      take: 5
+    // Fetch all top product variants in one query instead of N separate lookups
+    const variantIds = orderItems.filter(i => i.variant_id).map(i => i.variant_id as number);
+    const variants = await prisma.productVariant.findMany({
+      where: { id: { in: variantIds } },
+      include: { product: { select: { name: true } } }
     });
+    const variantMap = new Map(variants.map(v => [v.id, v]));
 
-    const topProducts = await Promise.all(
-      orderItems.map(async (item) => {
-        if (!item.variant_id) return null;
-        const variant = await prisma.productVariant.findUnique({
-          where: { id: item.variant_id },
-          include: { product: true }
-        });
+    const topProducts = orderItems
+      .filter(item => item.variant_id && variantMap.has(item.variant_id))
+      .map(item => {
+        const variant = variantMap.get(item.variant_id!);
         return {
           name: variant?.product.name,
           size: variant?.size_ml,
           sold: item._sum.quantity,
           revenue: item._sum.total_price
         };
-      })
-    );
+      });
 
     res.json({
       success: true,
