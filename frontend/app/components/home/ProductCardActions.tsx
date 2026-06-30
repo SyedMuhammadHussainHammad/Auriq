@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { memo, useState } from "react";
 import { Heart, ShoppingBag, Check } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 import { wishlistService } from "../../services/wishlistService";
 
-export default function ProductCardActions({ productId, variantId }: { productId: number; variantId?: number }) {
+const ProductCardActions = memo(function ProductCardActions({ productId, variantId }: { productId: number; variantId?: number }) {
   const { addToCart } = useCart();
   const [added, setAdded] = useState(false);
   const [wishlisted, setWishlisted] = useState(false);
@@ -73,4 +73,6 @@ export default function ProductCardActions({ productId, variantId }: { productId
       </div>
     </>
   );
-}
+});
+
+export default ProductCardActions;
