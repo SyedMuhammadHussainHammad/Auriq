@@ -1,16 +1,16 @@
 import rateLimit from 'express-rate-limit'
+import helmet from 'helmet'
 
 // Rate limiters
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20, // 20 attempts per 15 min
+  max: 20,
   message: { success: false, message: 'Too many attempts, please try again later' },
-  skip: (req) => req.path !== '/login' && req.path !== '/forgot-password'
 })
 
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 500, // generous limit for admin panel
+  max: 500,
   message: { success: false, message: 'Too many requests, please slow down' }
 })
 
@@ -37,6 +37,9 @@ dotenv.config()
 const app = express()
 
 // Middleware
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' }, // allow images/fonts served from this API
+}))
 app.use(cors({
   origin: [
     'http://localhost:3000',
@@ -83,6 +86,7 @@ app.listen(ENV.PORT, async () => {
     await prisma.$executeRawUnsafe(`ALTER TABLE product_images ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0;`);
     await prisma.$executeRawUnsafe(`ALTER TABLE ads ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0;`);
     await prisma.$executeRawUnsafe(`ALTER TABLE gallery_images ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verify_token_expires TIMESTAMP;`);
     console.log('Auto-migration complete.');
   } catch (error) {
     console.error('Auto-migration failed:', error);

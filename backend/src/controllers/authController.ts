@@ -31,7 +31,12 @@ export const register = async (req: Request, res: Response) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString()
 
     const user = await prisma.user.create({
-      data: { name, email, password: hashedPassword, phone, is_email_verified: false, email_verify_token: otp },
+      data: {
+        name, email, password: hashedPassword, phone,
+        is_email_verified: false,
+        email_verify_token: otp,
+        email_verify_token_expires: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
+      },
       select: { id: true, name: true, email: true, phone: true, created_at: true }
     })
 
@@ -144,6 +149,21 @@ export const verifyEmail = async (req: Request, res: Response) => {
       return;
     }
 
+    if (user.email_verify_token_expires && user.email_verify_token_expires < new Date()) {
+      // Expired — generate a fresh OTP and resend
+      const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          email_verify_token: newOtp,
+          email_verify_token_expires: new Date(Date.now() + 10 * 60 * 1000),
+        }
+      });
+      sendOTPEmail(email, newOtp).catch(e => console.error('Failed to resend OTP', e));
+      res.status(400).json({ success: false, message: 'OTP expired. A new code has been sent to your email.' });
+      return;
+    }
+
     if (user.email_verify_token !== otp) {
       res.status(400).json({ success: false, message: 'Invalid OTP' });
       return;
@@ -152,7 +172,7 @@ export const verifyEmail = async (req: Request, res: Response) => {
     // Mark as verified
     await prisma.user.update({
       where: { id: user.id },
-      data: { is_email_verified: true, email_verify_token: null }
+      data: { is_email_verified: true, email_verify_token: null, email_verify_token_expires: null }
     });
 
     const accessToken = generateAccessToken(user.id);
