@@ -29,19 +29,20 @@ export const register = async (req: Request, res: Response) => {
 
     const hashedPassword = await bcrypt.hash(password, 10)
     const otp = Math.floor(100000 + Math.random() * 900000).toString()
+    const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex')
 
     const user = await prisma.user.create({
       data: {
         name, email, password: hashedPassword, phone,
         is_email_verified: false,
-        email_verify_token: otp,
-        email_verify_token_expires: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
+        email_verify_token: hashedOtp,
+        email_verify_token_expires: new Date(Date.now() + 10 * 60 * 1000),
       },
       select: { id: true, name: true, email: true, phone: true, created_at: true }
     })
 
     try {
-      await sendOTPEmail(email, otp)
+      await sendOTPEmail(email, otp) // send plain OTP, store hash
     } catch (e) {
       console.error('Failed to send OTP', e)
     }
@@ -152,10 +153,11 @@ export const verifyEmail = async (req: Request, res: Response) => {
     if (user.email_verify_token_expires && user.email_verify_token_expires < new Date()) {
       // Expired — generate a fresh OTP and resend
       const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      const hashedNewOtp = crypto.createHash('sha256').update(newOtp).digest('hex');
       await prisma.user.update({
         where: { id: user.id },
         data: {
-          email_verify_token: newOtp,
+          email_verify_token: hashedNewOtp,
           email_verify_token_expires: new Date(Date.now() + 10 * 60 * 1000),
         }
       });
@@ -164,7 +166,10 @@ export const verifyEmail = async (req: Request, res: Response) => {
       return;
     }
 
-    if (user.email_verify_token !== otp) {
+    const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex');
+    // Support both hashed (new) and plaintext (old pre-migration) tokens
+    const tokenMatch = user.email_verify_token === hashedOtp || user.email_verify_token === otp;
+    if (!tokenMatch) {
       res.status(400).json({ success: false, message: 'Invalid OTP' });
       return;
     }
