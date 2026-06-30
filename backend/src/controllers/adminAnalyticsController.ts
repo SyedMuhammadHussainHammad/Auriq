@@ -41,7 +41,7 @@ export const getAnalytics = async (req: Request, res: Response) => {
       prisma.order.aggregate({ _sum: { total: true }, where: { created_at: { gte: startOfYear } } }),
       prisma.order.count(),
       prisma.order.aggregate({ _sum: { total: true } }),
-      prisma.user.count(),
+      prisma.user.count({ where: { is_email_verified: true, is_active: true } }),
       // Only fetch groups with more than 1 order — DB filters instead of loading all rows into memory
       prisma.order.groupBy({
         by: ['user_id'],

@@ -260,13 +260,14 @@ export const getOrderById = async (req: UserAuthRequest, res: Response): Promise
       return;
     }
 
-    // STRICT SECURITY RULE: Must be owner or guest accessing their own order
-    if (order.user_id && order.user_id !== userId) {
-      res.status(403).json({ success: false, message: 'Forbidden: You do not have permission to view this order.' });
-      return;
-    }
-
-    if (!order.user_id) {
+    if (order.user_id !== null) {
+      // Registered user order — must be authenticated as the same user
+      if (!userId || order.user_id !== userId) {
+        res.status(403).json({ success: false, message: 'Forbidden: You do not have permission to view this order.' });
+        return;
+      }
+    } else {
+      // Guest order — must present the matching session ID
       const guestSessionId = req.headers['x-guest-session-id'];
       if (!guestSessionId || guestSessionId !== order.session_id) {
         res.status(403).json({ success: false, message: 'Forbidden: Unauthorized access to guest order.' });

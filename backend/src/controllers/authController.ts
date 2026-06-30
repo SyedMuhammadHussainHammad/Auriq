@@ -265,7 +265,12 @@ export const googleLogin = async (req: Request, res: Response) => {
     const { email, name } = payload;
 
     let user = await prisma.user.findUnique({ where: { email } });
-    
+
+    if (user && !user.is_active) {
+      res.status(403).json({ success: false, message: 'Account is deactivated' });
+      return;
+    }
+
     if (!user || !user.phone) {
       const tempToken = generateTempToken({ email, name: name || 'Google User', provider: 'google' });
       res.json({
@@ -274,11 +279,6 @@ export const googleLogin = async (req: Request, res: Response) => {
         tempToken,
         message: 'Phone number required to complete registration'
       });
-      return;
-    }
-
-    if (!user.is_active) {
-      res.status(403).json({ success: false, message: 'Account is deactivated' });
       return;
     }
 
@@ -325,7 +325,12 @@ export const facebookLogin = async (req: Request, res: Response) => {
     const { email, name } = data;
 
     let user = await prisma.user.findUnique({ where: { email } });
-    
+
+    if (user && !user.is_active) {
+      res.status(403).json({ success: false, message: 'Account is deactivated' });
+      return;
+    }
+
     if (!user || !user.phone) {
       const tempToken = generateTempToken({ email, name: name || 'Facebook User', provider: 'facebook' });
       res.json({
@@ -334,11 +339,6 @@ export const facebookLogin = async (req: Request, res: Response) => {
         tempToken,
         message: 'Phone number required to complete registration'
       });
-      return;
-    }
-
-    if (!user.is_active) {
-      res.status(403).json({ success: false, message: 'Account is deactivated' });
       return;
     }
 

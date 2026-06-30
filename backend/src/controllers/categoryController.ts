@@ -7,6 +7,7 @@ export const getAllCategories = async (req: Request, res: Response) => {
       where: { is_active: true },
       include: {
         products: {
+          where: { is_active: true },
           take: 4,
           include: {
             images: { orderBy: { sort_order: 'asc' }, take: 1 }

@@ -59,7 +59,8 @@ export const cancelOrder = async (req: UserAuthRequest, res: Response) => {
     const userId = req.user?.id
 
     const order = await prisma.order.findFirst({
-      where: { id: orderId, user_id: userId }
+      where: { id: orderId, user_id: userId },
+      include: { items: true }
     })
 
     if (!order) {
@@ -75,10 +76,20 @@ export const cancelOrder = async (req: UserAuthRequest, res: Response) => {
       return
     }
 
-    await prisma.order.update({
-      where: { id: orderId },
-      data: { status: 'CANCELLED' }
-    })
+    await prisma.$transaction([
+      prisma.order.update({
+        where: { id: orderId },
+        data: { status: 'CANCELLED' }
+      }),
+      ...order.items
+        .filter(item => item.variant_id !== null)
+        .map(item =>
+          prisma.productVariant.update({
+            where: { id: item.variant_id! },
+            data: { stock_quantity: { increment: item.quantity } }
+          })
+        )
+    ])
 
     res.json({ success: true, message: 'Order cancelled successfully' })
   } catch (error) {
@@ -87,14 +98,21 @@ export const cancelOrder = async (req: UserAuthRequest, res: Response) => {
   }
 }
 
+const PUBLIC_SETTING_GROUPS = ['HOMEPAGE', 'BRANDING', 'ANNOUNCEMENT'];
+
 export const getPublicSettings = async (req: Request, res: Response) => {
   try {
     const { group } = req.query;
-    
-    let whereClause = {};
-    if (group && typeof group === 'string') {
-      whereClause = { group };
+
+    const requestedGroup = typeof group === 'string' ? group.toUpperCase() : null;
+    if (requestedGroup && !PUBLIC_SETTING_GROUPS.includes(requestedGroup)) {
+      res.status(403).json({ success: false, message: 'Forbidden' });
+      return;
     }
+
+    const whereClause = requestedGroup
+      ? { group: requestedGroup }
+      : { group: { in: PUBLIC_SETTING_GROUPS } };
 
     const settings = await prisma.systemSetting.findMany({
       where: whereClause

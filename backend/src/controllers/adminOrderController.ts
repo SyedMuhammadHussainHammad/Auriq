@@ -20,14 +20,22 @@ export const getAllOrders = async (req: Request, res: Response) => {
   }
 };
 
+const VALID_ORDER_STATUSES = ['PENDING', 'CONFIRMED', 'PROCESSING', 'WAREHOUSE', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
+
 export const updateOrderStatus = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
 
+    const normalizedStatus = (status || '').toUpperCase();
+    if (!VALID_ORDER_STATUSES.includes(normalizedStatus)) {
+      res.status(400).json({ success: false, message: `Invalid status. Must be one of: ${VALID_ORDER_STATUSES.join(', ')}` });
+      return;
+    }
+
     const order = await prisma.order.update({
       where: { id: parseInt(id as string) },
-      data: { status: status.toUpperCase() as any }
+      data: { status: normalizedStatus as any }
     });
 
     await logAdminAction((req as any).admin.id, 'UPDATE_ORDER_STATUS', 'Order', order.id, null, { status });
@@ -54,7 +62,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       totalRevenueData
     ] = await Promise.all([
       prisma.order.count(),
-      prisma.user.count(),
+      prisma.user.count({ where: { is_email_verified: true, is_active: true } }),
       prisma.product.count({ where: { is_active: true } }),
       prisma.order.count({ where: { status: 'PENDING' } }),
       prisma.order.findMany({
