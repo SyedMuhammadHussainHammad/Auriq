@@ -88,6 +88,8 @@ app.listen(ENV.PORT, async () => {
     await prisma.$executeRawUnsafe(`ALTER TABLE ads ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0;`);
     await prisma.$executeRawUnsafe(`ALTER TABLE gallery_images ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0;`);
     await prisma.$executeRawUnsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verify_token_expires TIMESTAMP;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE product_variants ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE product_variants ADD COLUMN IF NOT EXISTS low_stock_alert INTEGER DEFAULT 5;`);
     console.log('Auto-migration complete.');
   } catch (error) {
     console.error('Auto-migration failed:', error);
