@@ -27,7 +27,7 @@ export const getShippingConfig = async (req: Request, res: Response) => {
     const config = await prisma.shippingConfig.findFirst()
     res.json({
       success: true,
-      data: config || { flat_fee: 250, free_shipping_above: 5000 }
+      data: config || { flat_fee: 250, karachi_fee: 200, free_shipping_above: 5000 }
     })
   } catch (error) {
     console.error('GET SHIPPING CONFIG ERROR:', error)
