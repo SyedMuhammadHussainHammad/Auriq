@@ -152,9 +152,12 @@ export default function ProductDetailsClient({ product }: { product: any }) {
               <p className="text-lg text-foreground/40 line-through tracking-wide">{formatPrice(originalPrice)}</p>
             )}
           </div>
-          <p className="text-foreground/60 leading-relaxed tracking-wide text-sm md:text-base">
-            {product.description}
-          </p>
+          {product.description && (
+            <div className="mt-2">
+              <span className="text-[10px] text-foreground/40 uppercase tracking-[0.2em] font-bold block mb-2">Ingredients</span>
+              <p className="text-foreground/60 leading-relaxed tracking-wide text-sm md:text-base">{product.description}</p>
+            </div>
+          )}
         </div>
 
         {/* Size Selector */}
@@ -245,7 +248,7 @@ export default function ProductDetailsClient({ product }: { product: any }) {
               onClick={() => setActiveTab('details')}
               className={`pb-4 text-xs font-bold tracking-[0.2em] uppercase transition-colors relative ${activeTab === 'details' ? 'text-gold' : 'text-foreground/50 hover:text-foreground'}`}
             >
-              Details & Ingredients
+              Details
               {activeTab === 'details' && <span className="absolute bottom-0 left-0 w-full h-[2px] bg-gold"></span>}
             </button>
           </div>
@@ -278,10 +281,10 @@ export default function ProductDetailsClient({ product }: { product: any }) {
                   <strong>Application:</strong> Spray onto pulse points (wrists, neck, and behind ears) for best performance. Do not rub the fragrance into the skin as this will alter how the fragrance develops.
                 </p>
                 <p>
-                  <strong>Ingredients:</strong> Alcohol Denat., Parfum (Fragrance), Aqua (Water), Limonene, Linalool, Citronellol, Geraniol, Coumarin, Citral, Farnesol, Benzyl Benzoate, Benzyl Salicylate.
+                  <strong>Storage:</strong> Store in a cool, dry place away from direct sunlight and heat to preserve the fragrance integrity.
                 </p>
                 <p className="text-[10px] text-foreground/40 mt-4 uppercase tracking-widest">
-                  Note: Ingredients are subject to change. For the most complete and up-to-date list of ingredients, refer to the product packaging.
+                  For allergen information and full ingredient list, refer to the product packaging.
                 </p>
               </div>
             )}

@@ -108,7 +108,7 @@ export default function CollectionsClient({ initialProducts }: { initialProducts
     <div className="flex flex-col gap-6 w-full">
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-xl font-serif text-gradient-gold font-bold tracking-widest">Filters</h3>
-        <button onClick={() => { setPriceFilters([]); setGenderFilters([]); }} className="text-[10px] text-foreground/50 hover:text-foreground uppercase tracking-[0.2em] transition-colors">Clear All</button>
+        <button onClick={() => { setPriceFilters([]); setGenderFilters([]); setFamilyFilters([]); }} className="text-[10px] text-foreground/50 hover:text-foreground uppercase tracking-[0.2em] transition-colors">Clear All</button>
       </div>
 
       {/* Price Filter */}
@@ -125,6 +125,27 @@ export default function CollectionsClient({ initialProducts }: { initialProducts
             {['Under Rs. 10,000', 'Rs. 10,000 - Rs. 15,000', 'Rs. 15,000 - Rs. 20,000', 'Over Rs. 20,000'].map(label => (
               <label key={label} className="flex items-center gap-4 cursor-pointer group">
                 <input type="checkbox" checked={priceFilters.includes(label)} onChange={() => toggleArrayFilter(priceFilters, setPriceFilters, label)} className="accent-[#d4af37] w-4 h-4 bg-transparent border-foreground/30 cursor-pointer" />
+                <span className="text-sm text-foreground/60 group-hover:text-foreground transition-colors tracking-wide font-semibold">{label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Type Filter */}
+      <div className="border-t border-foreground/10 pt-6">
+        <button
+          className="flex w-full items-center justify-between text-foreground hover:text-gold transition-colors"
+          onClick={() => toggleFilter('family')}
+        >
+          <span className="text-xs tracking-[0.2em] uppercase font-bold">Type</span>
+          {expandedFilters.family ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
+        <div className={`overflow-hidden transition-all duration-300 ${expandedFilters.family ? 'max-h-32 mt-5' : 'max-h-0'}`}>
+          <div className="flex flex-col gap-4">
+            {[{ label: 'Perfume', value: 'PERFUME' }, { label: 'Attar', value: 'ATTAR' }].map(({ label, value }) => (
+              <label key={value} className="flex items-center gap-4 cursor-pointer group">
+                <input type="checkbox" checked={familyFilters.includes(value)} onChange={() => toggleArrayFilter(familyFilters, setFamilyFilters, value)} className="accent-[#d4af37] w-4 h-4 bg-transparent border-foreground/30 cursor-pointer" />
                 <span className="text-sm text-foreground/60 group-hover:text-foreground transition-colors tracking-wide font-semibold">{label}</span>
               </label>
             ))}

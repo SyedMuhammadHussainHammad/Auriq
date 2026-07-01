@@ -102,7 +102,12 @@ export default function CartPage() {
                           <Link href={`/products/${item.variant?.product.id}`}>
                             <h3 className="font-serif text-lg md:text-xl text-foreground hover:text-gold transition-colors">{name}</h3>
                           </Link>
-                          <span className="text-foreground/60 text-sm">{formatPrice(price)}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-foreground/60 text-sm">{formatPrice(price)}</span>
+                            {item.variant?.size_ml && (
+                              <span className="text-[10px] text-foreground/40 border border-foreground/20 rounded px-1.5 py-0.5 uppercase tracking-widest font-bold">{item.variant.size_ml}ml</span>
+                            )}
+                          </div>
                           
                           {/* Mobile Remove & Quantity */}
                           <div className="flex items-center justify-between mt-4 md:hidden">

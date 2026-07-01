@@ -19,7 +19,7 @@ const revalidateFrontend = async (tag: string) => {
 
 export const createProduct = async (req: Request, res: Response) => {
   try {
-    const { name, brand, description, category_id, is_active, is_featured, is_best_seller, variants_json } = req.body;
+    const { name, brand, description, category_id, is_active, is_featured, is_best_seller, variants_json, gender, fragrance_type, notes_json } = req.body;
     const files = req.files as Express.Multer.File[];
 
     let uploadedImages: string[] = [];
@@ -39,6 +39,8 @@ export const createProduct = async (req: Request, res: Response) => {
         is_active: is_active === 'true',
         is_featured: is_featured === 'true',
         is_best_seller: is_best_seller === 'true',
+        ...(gender && { gender }),
+        ...(fragrance_type && { fragrance_type }),
         images: {
           create: uploadedImages.map((url, index) => ({
             image_url: url,
@@ -60,6 +62,15 @@ export const createProduct = async (req: Request, res: Response) => {
              sku: v.sku
            }
          });
+      }
+    }
+
+    if (notes_json) {
+      const notes = JSON.parse(notes_json);
+      for (const note of notes) {
+        await prisma.fragranceNote.create({
+          data: { product_id: product.id, note_type: note.note_type, note_name: note.note_name }
+        });
       }
     }
 
@@ -87,6 +98,7 @@ export const getAllProducts = async (req: Request, res: Response) => {
           category: true,
           variants: true,
           images: true,
+          fragrance_notes: true,
         },
         skip: (page - 1) * limit,
         take: limit,
@@ -124,7 +136,8 @@ export const updateProduct = async (req: Request, res: Response) => {
       is_new_arrival,
       fragrance_type,
       gender,
-      variants_json
+      variants_json,
+      notes_json
     } = req.body
 
     const files = req.files as Express.Multer.File[]
@@ -199,6 +212,16 @@ export const updateProduct = async (req: Request, res: Response) => {
             }
           })
         }
+      }
+    }
+
+    if (notes_json) {
+      const notes = JSON.parse(notes_json);
+      await prisma.fragranceNote.deleteMany({ where: { product_id: product.id } });
+      for (const note of notes) {
+        await prisma.fragranceNote.create({
+          data: { product_id: product.id, note_type: note.note_type, note_name: note.note_name }
+        });
       }
     }
 

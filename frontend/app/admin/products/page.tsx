@@ -17,6 +17,7 @@ export default function AdminProducts() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("active");
   const [add50, setAdd50] = useState(false);
   const [add100, setAdd100] = useState(true);
@@ -125,6 +126,13 @@ export default function AdminProducts() {
       formData.append("variants_json", JSON.stringify(variants));
       ['price_50','stock_50','price_100','stock_100'].forEach(k => formData.delete(k));
 
+      const notes = [];
+      const top = formData.get('top_notes'); if (top) notes.push({ note_type: 'TOP', note_name: top });
+      const heart = formData.get('heart_notes'); if (heart) notes.push({ note_type: 'HEART', note_name: heart });
+      const base = formData.get('base_notes'); if (base) notes.push({ note_type: 'BASE', note_name: base });
+      formData.append('notes_json', JSON.stringify(notes));
+      ['top_notes','heart_notes','base_notes'].forEach(k => formData.delete(k));
+
       const res = await adminProductService.create(formData);
       if (res.success) {
         setIsAddProductOpen(false);
@@ -167,6 +175,13 @@ export default function AdminProducts() {
 
     formData.append("variants_json", JSON.stringify(variants));
     ['price_50','stock_50','price_100','stock_100'].forEach(k => formData.delete(k));
+
+    const notes = [];
+    const top = formData.get('top_notes'); if (top) notes.push({ note_type: 'TOP', note_name: top });
+    const heart = formData.get('heart_notes'); if (heart) notes.push({ note_type: 'HEART', note_name: heart });
+    const base = formData.get('base_notes'); if (base) notes.push({ note_type: 'BASE', note_name: base });
+    formData.append('notes_json', JSON.stringify(notes));
+    ['top_notes','heart_notes','base_notes'].forEach(k => formData.delete(k));
 
     const res = await adminProductService.update(editingProduct.id, formData);
     if (res.success) {
@@ -226,6 +241,11 @@ export default function AdminProducts() {
             <option value="2">Women</option>
             <option value="3">Unisex</option>
           </select>
+          <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="flex-1 md:flex-none border border-foreground/10 bg-background px-4 py-2 rounded-lg text-xs font-bold tracking-widest uppercase hover:border-gold transition-colors text-foreground/80 focus:outline-none focus:border-gold">
+            <option value="">All Types</option>
+            <option value="PERFUME">Perfume</option>
+            <option value="ATTAR">Attar</option>
+          </select>
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="flex-1 md:flex-none border border-foreground/10 bg-background px-4 py-2 rounded-lg text-xs font-bold tracking-widest uppercase hover:border-gold transition-colors text-foreground/80 focus:outline-none focus:border-gold">
             <option value="">All Status</option>
             <option value="active">Active</option>
@@ -254,7 +274,7 @@ export default function AdminProducts() {
                     />
                   </th>
                   <th className="p-4 font-bold">Product</th>
-                  <th className="p-4 font-bold">Category ID</th>
+                  <th className="p-4 font-bold">Category / Type</th>
                   <th className="p-4 font-bold">Price (Base)</th>
                   <th className="p-4 font-bold">Stock</th>
                   <th className="p-4 font-bold">Status</th>
@@ -271,8 +291,9 @@ export default function AdminProducts() {
                 ) : products.filter(p => {
                     const matchesSearch = !search || p.name.toLowerCase().includes(search.toLowerCase());
                     const matchesCategory = !categoryFilter || p.category_id.toString() === categoryFilter;
+                    const matchesType = !typeFilter || p.fragrance_type === typeFilter;
                     const matchesStatus = !statusFilter || (statusFilter === "active" ? p.is_active : !p.is_active);
-                    return matchesSearch && matchesCategory && matchesStatus;
+                    return matchesSearch && matchesCategory && matchesType && matchesStatus;
                   }).map((product) => {
                   const baseVariant = product.variants?.[0] || { price: 0, stock_quantity: 0 };
                   const imageUrl = product.images?.[0]?.image_url || "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=2787&auto=format&fit=crop";
@@ -295,7 +316,14 @@ export default function AdminProducts() {
                           <span className="font-bold text-foreground tracking-wide">{product.name}</span>
                         </div>
                       </td>
-                      <td className="p-4 text-foreground/80 font-medium">{product.category_id}</td>
+                      <td className="p-4">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-foreground/80 font-medium text-sm">{product.category?.name || `Cat #${product.category_id}`}</span>
+                          {product.fragrance_type && (
+                            <span className="text-[10px] text-gold/70 uppercase tracking-widest font-bold">{product.fragrance_type}</span>
+                          )}
+                        </div>
+                      </td>
                       <td className="p-4 font-semibold text-foreground">Rs. {baseVariant.price}</td>
                       <td className="p-4">
                         <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider
@@ -344,8 +372,38 @@ export default function AdminProducts() {
         <input type="text" name="name" placeholder="e.g. Royal Oud" className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground" required />
       </div>
       <div className="flex flex-col gap-2">
-        <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Category ID</label>
-        <input type="number" name="category_id" placeholder="1" className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground" required />
+        <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Category</label>
+        <select name="category_id" className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground *:bg-background" required>
+          <option value="">Select category</option>
+          <option value="1">Men</option>
+          <option value="2">Women</option>
+          <option value="3">Unisex</option>
+        </select>
+      </div>
+      <div className="flex flex-col gap-2">
+        <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Product Type</label>
+        <select name="fragrance_type" className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground *:bg-background" required>
+          <option value="">Select type</option>
+          <option value="PERFUME">Perfume</option>
+          <option value="ATTAR">Attar</option>
+        </select>
+      </div>
+      <div className="flex flex-col gap-2 md:col-span-2">
+        <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Fragrance Notes</label>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] text-foreground/40 uppercase tracking-widest">Top Notes</span>
+            <input type="text" name="top_notes" placeholder="e.g. Bergamot, Lemon" className="bg-transparent border border-foreground/20 rounded-lg px-3 py-2 text-sm focus:border-gold outline-none text-foreground" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] text-foreground/40 uppercase tracking-widest">Heart Notes</span>
+            <input type="text" name="heart_notes" placeholder="e.g. Rose, Jasmine" className="bg-transparent border border-foreground/20 rounded-lg px-3 py-2 text-sm focus:border-gold outline-none text-foreground" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] text-foreground/40 uppercase tracking-widest">Musk / Amber (Base)</span>
+            <input type="text" name="base_notes" placeholder="e.g. Musk, Amber, Oud" className="bg-transparent border border-foreground/20 rounded-lg px-3 py-2 text-sm focus:border-gold outline-none text-foreground" />
+          </div>
+        </div>
       </div>
       <div className="flex flex-col gap-2 md:col-span-2">
         <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Size Options</label>
@@ -391,8 +449,8 @@ export default function AdminProducts() {
         </div>
       </div>
       <div className="flex flex-col gap-2 md:col-span-2">
-        <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Description</label>
-        <textarea name="description" placeholder="A rich, woody fragrance..." rows={3} className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground" required />
+        <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Ingredients</label>
+        <textarea name="description" placeholder="e.g. Alcohol Denat., Parfum, Aqua, Limonene, Linalool..." rows={3} className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground" required />
       </div>
       <div className="flex flex-col gap-2 md:col-span-2">
         <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Upload Images (Max 3)</label>
@@ -428,8 +486,37 @@ export default function AdminProducts() {
           <input type="text" name="name" defaultValue={editingProduct.name} className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground" required />
         </div>
         <div className="flex flex-col gap-2">
-          <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Category ID</label>
-          <input type="number" name="category_id" defaultValue={editingProduct.category_id} className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground" required />
+          <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Category</label>
+          <select name="category_id" defaultValue={editingProduct.category_id?.toString()} className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground *:bg-background" required>
+            <option value="1">Men</option>
+            <option value="2">Women</option>
+            <option value="3">Unisex</option>
+          </select>
+        </div>
+        <div className="flex flex-col gap-2">
+          <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Product Type</label>
+          <select name="fragrance_type" defaultValue={editingProduct.fragrance_type || ''} className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground *:bg-background" required>
+            <option value="">Select type</option>
+            <option value="PERFUME">Perfume</option>
+            <option value="ATTAR">Attar</option>
+          </select>
+        </div>
+        <div className="flex flex-col gap-2 md:col-span-2">
+          <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Fragrance Notes</label>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {(['TOP','HEART','BASE'] as const).map((type, i) => {
+              const names = ['top_notes','heart_notes','base_notes'] as const;
+              const labels = ['Top Notes','Heart Notes','Musk / Amber (Base)'];
+              const placeholders = ['e.g. Bergamot, Lemon','e.g. Rose, Jasmine','e.g. Musk, Amber, Oud'];
+              const existing = (editingProduct.fragrance_notes || []).find((n: any) => n.note_type === type);
+              return (
+                <div key={type} className="flex flex-col gap-1">
+                  <span className="text-[10px] text-foreground/40 uppercase tracking-widest">{labels[i]}</span>
+                  <input type="text" name={names[i]} defaultValue={existing?.note_name || ''} placeholder={placeholders[i]} className="bg-transparent border border-foreground/20 rounded-lg px-3 py-2 text-sm focus:border-gold outline-none text-foreground" />
+                </div>
+              );
+            })}
+          </div>
         </div>
         <div className="flex flex-col gap-2 md:col-span-2">
           <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Size Options</label>
@@ -485,8 +572,8 @@ export default function AdminProducts() {
           </div>
         </div>
         <div className="flex flex-col gap-2 md:col-span-2">
-          <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Description</label>
-          <textarea name="description" defaultValue={editingProduct.description} rows={3} className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground" required />
+          <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Ingredients</label>
+          <textarea name="description" defaultValue={editingProduct.description} rows={3} placeholder="e.g. Alcohol Denat., Parfum, Aqua, Limonene, Linalool..." className="bg-transparent border border-foreground/20 rounded-lg px-4 py-2 text-sm focus:border-gold outline-none text-foreground" required />
         </div>
         <div className="flex flex-col gap-2">
           <label className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold">Status</label>
