@@ -33,8 +33,9 @@ html {
 :root {
   /* LIGHT THEME (Default) */
   --background: #F8FAFC;
+  --header-bg: rgba(158, 160, 162, 0.8);
   --secondary-bg: #EEF3FB;
-  --card: #FFFFFF;
+  --card: #9EA0A2;
   --gold: #8BA3D0; /* Primary Accent (Blue in Light Mode) */
   --gold-hover: #7896CA;
   --foreground: #1F2937;
@@ -48,6 +49,7 @@ html {
   :root {
     /* DARK THEME */
     --background: #0E0E0E;
+    --header-bg: rgba(14, 14, 14, 0.8);
     --secondary-bg: #171717;
     --card: #1F1F1F;
     --gold: #C9A44D; /* Primary Accent (Gold in Dark Mode) */

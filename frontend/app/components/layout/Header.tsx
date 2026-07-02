@@ -92,7 +92,7 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md border-b border-foreground/10 transition-all duration-300">
+    <header className="sticky top-0 z-50 w-full bg-[var(--header-bg)] backdrop-blur-md border-b border-foreground/10 transition-all duration-300">
       <AnnouncementBar />
       <div className="container-lux flex items-center justify-between h-20">
         {/* Left: Logo */}

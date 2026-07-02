@@ -9,7 +9,32 @@ import { useSettings } from "../../context/SettingsContext";
 export default function FeaturedCollection({ products = [] }: { products?: any[] }) {
   const settings = useSettings();
 
-  if (!products || products.length === 0 || settings.FEATURED_ENABLED === 'false') return null;
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(true);
+
+  // Take up to 8 products and duplicate for infinite scroll
+  const carouselProducts = products.slice(0, 8);
+  const displayProducts = [...carouselProducts, ...carouselProducts];
+
+  useEffect(() => {
+    if (carouselProducts.length <= 1) return;
+    
+    const timer = setInterval(() => {
+      setIsTransitioning(true);
+      setCurrentIndex((prev) => prev + 1);
+    }, 4000);
+    
+    return () => clearInterval(timer);
+  }, [carouselProducts.length]);
+
+  const handleTransitionEnd = () => {
+    if (currentIndex >= carouselProducts.length) {
+      setIsTransitioning(false);
+      setCurrentIndex(currentIndex - carouselProducts.length);
+    }
+  };
+
+  if (!products || products.length === 0) return null;
 
   const title = settings.FEATURED_TITLE || "Featured Collections";
   const subtitle = settings.FEATURED_SUBTITLE || "";
@@ -27,44 +52,55 @@ export default function FeaturedCollection({ products = [] }: { products?: any[]
               <p className="mt-4 text-sm text-foreground/70 max-w-2xl">{subtitle}</p>
             )}
           </div>
-          <Link href="/collections" className="text-xs tracking-[0.2em] text-foreground hover:text-gold transition-colors pb-1 drop-shadow-md">
+          <Link href="/collections" className="text-xs tracking-[0.2em] text-foreground hover:text-gold transition-colors pb-1 drop-shadow-md whitespace-nowrap ml-4">
             EXPLORE ALL
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-16">
-          {products.map((product) => {
-            const price = product.variants?.[0]?.price || 0;
-            const imageUrl = product.images?.[0]?.image_url || "https://images.unsplash.com/photo-1595425970377-c9703cc48a7e?q=80&w=2800&auto=format&fit=crop";
+        {/* Carousel Container */}
+        <div className="relative w-full overflow-hidden [--slide-width:100%] sm:[--slide-width:50%] lg:[--slide-width:25%]">
+          <div 
+            className="flex -mx-4"
+            style={{ 
+              transform: `translateX(calc(-${currentIndex} * var(--slide-width)))`,
+              transition: isTransitioning ? 'transform 700ms cubic-bezier(0.4, 0, 0.2, 1)' : 'none'
+            }}
+            onTransitionEnd={handleTransitionEnd}
+          >
+            {displayProducts.map((product, idx) => {
+              const price = product.variants?.[0]?.price || 0;
+              const imageUrl = product.images?.[0]?.image_url || "https://images.unsplash.com/photo-1595425970377-c9703cc48a7e?q=80&w=2800&auto=format&fit=crop";
 
-            return (
-              <div key={product.id} className="group relative flex flex-col lux-glass-card p-6">
-                <div className="flex flex-col h-full">
-                  {/* Image Container with elegant hover zoom */}
-                  <Link href={`/products/${product.slug || product.id}`} className="block relative aspect-[4/5] overflow-hidden rounded-xl mb-6 z-10 bg-background shadow-2xl">
-                    <Image
-                      src={imageUrl}
-                      alt={product.name}
-                      fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      className="object-cover opacity-90 transition-all duration-700 group-hover:scale-110 group-hover:opacity-100"
-                    />
-                    
-                    <ProductCardActions productId={product.id} />
-                  </Link>
+              return (
+                <div key={`${product.id}-${idx}`} className="w-full sm:w-1/2 lg:w-1/4 flex-shrink-0 px-4">
+                  <div className="group relative flex flex-col lux-glass-card p-6 h-full">
+                    <div className="flex flex-col h-full">
+                      {/* Image Container with elegant hover zoom */}
+                      <Link href={`/products/${product.slug || product.id}`} className="block relative aspect-[4/5] overflow-hidden rounded-xl mb-6 z-10 bg-background shadow-2xl">
+                        <Image
+                          src={imageUrl}
+                          alt={product.name}
+                          fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          className="object-cover opacity-90 transition-all duration-700 group-hover:scale-110 group-hover:opacity-100"
+                        />
+                        <ProductCardActions productId={product.id} />
+                      </Link>
 
-                  {/* Product Info - Minimalist typography */}
-                  <div className="flex flex-col text-center relative z-10 px-4">
-                    <span className="text-[10px] text-gold uppercase tracking-[0.2em] mb-3 font-bold">{product.brand}</span>
-                    <Link href={`/products/${product.slug || product.id}`}>
-                      <h3 className="font-serif text-xl text-foreground mb-2 font-bold drop-shadow-md hover:text-gold transition-colors">{product.name}</h3>
-                    </Link>
-                    <span className="text-foreground/80 text-sm tracking-wide font-medium">Rs. {parseFloat(price).toLocaleString()}</span>
+                      {/* Product Info - Minimalist typography */}
+                      <div className="flex flex-col text-center relative z-10 px-4 mt-auto">
+                        <span className="text-[10px] text-gold uppercase tracking-[0.2em] mb-3 font-bold">{product.brand}</span>
+                        <Link href={`/products/${product.slug || product.id}`}>
+                          <h3 className="font-serif text-xl text-foreground mb-2 font-bold drop-shadow-md hover:text-gold transition-colors line-clamp-1">{product.name}</h3>
+                        </Link>
+                        <span className="text-foreground/80 text-sm tracking-wide font-medium">Rs. {parseFloat(price).toLocaleString()}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>

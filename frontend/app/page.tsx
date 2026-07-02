@@ -3,6 +3,7 @@ import Footer from "./components/layout/Footer";
 import Hero from "./components/home/Hero";
 import FeaturedAds from "./components/home/FeaturedAds";
 import FeaturedCollection from "./components/home/FeaturedCollection";
+import FeaturedGrid from "./components/home/FeaturedGrid";
 import OurStory from "./components/home/OurStory";
 import ContactFeedback from "./components/home/ContactFeedback";
 import { productService } from "./services/productService";
@@ -15,9 +16,15 @@ export default async function Home() {
     import('./services/publicSettingsService').then(m => m.publicSettingsService.getSettingsByGroup("HOMEPAGE")).catch(() => ({}))
   ]);
 
-  const featuredProducts = featuredData.data || [];
+  let featuredProducts = featuredData.data || [];
   const ads = adsData.data || [];
   const settings = settingsData || {};
+
+  // Fallback to all products if no featured products exist (for demo purposes)
+  if (featuredProducts.length === 0) {
+    const allProductsData = await productService.getAllProducts().catch(() => ({ data: [] }));
+    featuredProducts = allProductsData.data || [];
+  }
 
   return (
     <>
@@ -27,6 +34,7 @@ export default async function Home() {
         <FeaturedAds ads={ads} settings={settings} />
         <Hero settings={settings} />
         <FeaturedCollection products={featuredProducts} />
+        <FeaturedGrid products={featuredProducts} />
         <OurStory />
         <ContactFeedback />
       </main>
