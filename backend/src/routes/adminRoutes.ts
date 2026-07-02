@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { upload } from '../middleware/uploadMiddleware';
-import { adminLogin } from '../controllers/adminAuthController';
+import { adminLogin, refreshAdminToken } from '../controllers/adminAuthController';
 import { createProduct, getAllProducts, updateProduct, deleteProduct, deleteProductImage, bulkDeleteProducts } from '../controllers/adminProductController';
 import { createCategory, updateCategory } from '../controllers/adminCategoryController';
 import { createAd, getAllAds, deleteAd, toggleAdStatus } from '../controllers/adminAdController';
@@ -17,6 +17,7 @@ const router = Router();
 
 // Auth routes (public)
 router.post('/login', adminLogin);
+router.post('/refresh', refreshAdminToken);
 
 // Protected Admin Routes
 router.use(verifyAdmin);

@@ -76,10 +76,10 @@ export default function AdminOrders() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'Delivered': return <CheckCircle className="w-3 h-3" />;
-      case 'Shipped': return <Truck className="w-3 h-3" />;
-      case 'Processing': return <Clock className="w-3 h-3" />;
-      case 'Cancelled': return <XCircle className="w-3 h-3" />;
+      case 'DELIVERED': return <CheckCircle className="w-3 h-3" />;
+      case 'SHIPPED': return <Truck className="w-3 h-3" />;
+      case 'PROCESSING': return <Clock className="w-3 h-3" />;
+      case 'CANCELLED': return <XCircle className="w-3 h-3" />;
       default: return <Clock className="w-3 h-3" />;
     }
   };
@@ -148,7 +148,7 @@ export default function AdminOrders() {
                     </td>
                   </tr>
                 ) : filteredOrders.map((order) => {
-                  const statusFormatted = order.status.charAt(0).toUpperCase() + order.status.slice(1);
+                  const statusFormatted = order.status.charAt(0).toUpperCase() + order.status.slice(1).toLowerCase();
                   return (
                     <tr key={order.id} className="border-b border-foreground/5 hover:bg-foreground/[0.02] transition-colors text-sm group">
                       <td className="p-4">
@@ -164,13 +164,13 @@ export default function AdminOrders() {
                       <td className="p-4 text-foreground/80 font-medium">{new Date(order.created_at).toLocaleDateString()}</td>
                       <td className="p-4">
                         <span className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1.5
-                          ${statusFormatted === 'Delivered' ? 'bg-green-500/10 text-green-500' : 
-                            statusFormatted === 'Processing' ? 'bg-blue-500/10 text-blue-500' : 
-                            statusFormatted === 'Shipped' ? 'bg-purple-500/10 text-purple-500' : 
-                            statusFormatted === 'Cancelled' ? 'bg-red-500/10 text-red-500' : 
+                          ${order.status === 'DELIVERED' ? 'bg-green-500/10 text-green-500' :
+                            order.status === 'PROCESSING' ? 'bg-blue-500/10 text-blue-500' :
+                            order.status === 'SHIPPED' ? 'bg-purple-500/10 text-purple-500' :
+                            order.status === 'CANCELLED' ? 'bg-red-500/10 text-red-500' :
                             'bg-gold/10 text-gold'}`}
                         >
-                          {getStatusIcon(statusFormatted)}
+                          {getStatusIcon(order.status)}
                           {statusFormatted}
                         </span>
                       </td>

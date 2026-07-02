@@ -4,6 +4,50 @@ import jwt from 'jsonwebtoken';
 import prisma from '../config/database';
 import { ENV } from '../config/env';
 
+export const refreshAdminToken = async (req: Request, res: Response) => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+      res.status(400).json({ success: false, message: 'Refresh token required' });
+      return;
+    }
+
+    let decoded: any;
+    try {
+      decoded = jwt.verify(refreshToken, ENV.JWT_REFRESH_SECRET);
+    } catch {
+      res.status(401).json({ success: false, message: 'Invalid or expired refresh token' });
+      return;
+    }
+
+    const storedToken = await prisma.adminRefreshToken.findFirst({
+      where: { token: refreshToken, admin_id: decoded.id, expires_at: { gt: new Date() } }
+    });
+
+    if (!storedToken) {
+      res.status(401).json({ success: false, message: 'Refresh token revoked or expired' });
+      return;
+    }
+
+    const admin = await prisma.admin.findUnique({ where: { id: decoded.id } });
+    if (!admin) {
+      res.status(401).json({ success: false, message: 'Admin not found' });
+      return;
+    }
+
+    const accessToken = jwt.sign(
+      { id: admin.id, email: admin.email, role: 'ADMIN' },
+      ENV.JWT_ACCESS_SECRET,
+      { expiresIn: '15m' }
+    );
+
+    res.json({ success: true, data: { accessToken } });
+  } catch (error) {
+    console.error('ADMIN REFRESH TOKEN ERROR:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
 export const adminLogin = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;

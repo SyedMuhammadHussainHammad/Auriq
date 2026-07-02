@@ -5,15 +5,28 @@ import { logAdminAction } from '../utils/auditLog';
 
 export const getAllOrders = async (req: Request, res: Response) => {
   try {
-    const orders = await prisma.order.findMany({
-      include: {
-        user: { select: { name: true, email: true } },
-        items: true,
-        address: true
-      },
-      orderBy: { created_at: 'desc' }
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(200, Math.max(1, Number(req.query.limit) || 100));
+
+    const [total, orders] = await Promise.all([
+      prisma.order.count(),
+      prisma.order.findMany({
+        include: {
+          user: { select: { name: true, email: true } },
+          items: true,
+          address: true
+        },
+        orderBy: { created_at: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      })
+    ]);
+
+    res.json({
+      success: true,
+      data: orders,
+      pagination: { total, page, limit, pages: Math.ceil(total / limit) }
     });
-    res.json({ success: true, data: orders });
   } catch (error) {
     console.error('GET ALL ORDERS ERROR:', error);
     res.status(500).json({ success: false, message: 'Server error' });

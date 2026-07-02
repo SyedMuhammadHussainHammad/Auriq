@@ -10,12 +10,16 @@ export const adminAuthService = {
     
     if (res.success && res.data.accessToken) {
       localStorage.setItem('adminToken', res.data.accessToken);
+      if (res.data.refreshToken) {
+        localStorage.setItem('adminRefreshToken', res.data.refreshToken);
+      }
     }
     return res;
   },
 
   logout: () => {
     localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminRefreshToken');
     window.location.href = '/admin/login';
   },
 

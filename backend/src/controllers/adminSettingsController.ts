@@ -10,7 +10,7 @@ const prisma = new PrismaClient();
 
 const revalidateFrontend = async (tag: string) => {
   try {
-    await axios.post('http://localhost:3000/api/revalidate', {
+    await axios.post(`${ENV.FRONTEND_URL}/api/revalidate`, {
       tag,
       secret: ENV.REVALIDATION_SECRET
     }, { timeout: 5000 });
