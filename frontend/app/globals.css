@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+html {
+  scrollbar-gutter: stable;
+}
+
 ::view-transition-old(root) {
   animation: none;
   z-index: 1;

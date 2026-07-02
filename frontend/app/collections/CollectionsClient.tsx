@@ -93,18 +93,25 @@ export default function CollectionsClient({ initialProducts }: { initialProducts
   const visibleProducts = useMemo(() => sortedProducts.slice(0, visibleCount), [sortedProducts, visibleCount]);
 
   const [expandedFilters, setExpandedFilters] = useState({
-    price: true,
-    family: true,
-    gender: true,
-    occasion: true,
-    brand: true,
+    price: false,
+    family: false,
+    gender: false,
+    occasion: false,
+    brand: false,
   });
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => {
+      setExpandedFilters({ price: true, family: true, gender: true, occasion: true, brand: true });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
   const toggleFilter = (key: keyof typeof expandedFilters) => {
     setExpandedFilters((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const FilterSidebar = () => (
+  const filterSidebar = (
     <div className="flex flex-col gap-6 w-full">
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-xl font-serif text-gradient-gold font-bold tracking-widest">Filters</h3>
@@ -120,14 +127,16 @@ export default function CollectionsClient({ initialProducts }: { initialProducts
           <span className="text-xs tracking-[0.2em] uppercase font-bold">Price</span>
           {expandedFilters.price ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
-        <div className={`overflow-hidden transition-all duration-300 ${expandedFilters.price ? 'max-h-48 mt-5' : 'max-h-0'}`}>
-          <div className="flex flex-col gap-4">
-            {['Under Rs. 10,000', 'Rs. 10,000 - Rs. 15,000', 'Rs. 15,000 - Rs. 20,000', 'Over Rs. 20,000'].map(label => (
-              <label key={label} className="flex items-center gap-4 cursor-pointer group">
-                <input type="checkbox" checked={priceFilters.includes(label)} onChange={() => toggleArrayFilter(priceFilters, setPriceFilters, label)} className="accent-[#d4af37] w-4 h-4 bg-transparent border-foreground/30 cursor-pointer" />
-                <span className="text-sm text-foreground/60 group-hover:text-foreground transition-colors tracking-wide font-semibold">{label}</span>
-              </label>
-            ))}
+        <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${expandedFilters.price ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+          <div className="overflow-hidden">
+            <div className="flex flex-col gap-4 pt-5">
+              {['Under Rs. 10,000', 'Rs. 10,000 - Rs. 15,000', 'Rs. 15,000 - Rs. 20,000', 'Over Rs. 20,000'].map(label => (
+                <label key={label} className="flex items-center gap-4 cursor-pointer group">
+                  <input type="checkbox" checked={priceFilters.includes(label)} onChange={() => toggleArrayFilter(priceFilters, setPriceFilters, label)} className="accent-[#d4af37] w-4 h-4 bg-transparent border-foreground/30 cursor-pointer" />
+                  <span className="text-sm text-foreground/60 group-hover:text-foreground transition-colors tracking-wide font-semibold">{label}</span>
+                </label>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -141,14 +150,16 @@ export default function CollectionsClient({ initialProducts }: { initialProducts
           <span className="text-xs tracking-[0.2em] uppercase font-bold">Type</span>
           {expandedFilters.family ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
-        <div className={`overflow-hidden transition-all duration-300 ${expandedFilters.family ? 'max-h-32 mt-5' : 'max-h-0'}`}>
-          <div className="flex flex-col gap-4">
-            {[{ label: 'Perfume', value: 'PERFUME' }, { label: 'Attar', value: 'ATTAR' }].map(({ label, value }) => (
-              <label key={value} className="flex items-center gap-4 cursor-pointer group">
-                <input type="checkbox" checked={familyFilters.includes(value)} onChange={() => toggleArrayFilter(familyFilters, setFamilyFilters, value)} className="accent-[#d4af37] w-4 h-4 bg-transparent border-foreground/30 cursor-pointer" />
-                <span className="text-sm text-foreground/60 group-hover:text-foreground transition-colors tracking-wide font-semibold">{label}</span>
-              </label>
-            ))}
+        <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${expandedFilters.family ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+          <div className="overflow-hidden">
+            <div className="flex flex-col gap-4 pt-5">
+              {[{ label: 'Perfume', value: 'PERFUME' }, { label: 'Attar', value: 'ATTAR' }].map(({ label, value }) => (
+                <label key={value} className="flex items-center gap-4 cursor-pointer group">
+                  <input type="checkbox" checked={familyFilters.includes(value)} onChange={() => toggleArrayFilter(familyFilters, setFamilyFilters, value)} className="accent-[#d4af37] w-4 h-4 bg-transparent border-foreground/30 cursor-pointer" />
+                  <span className="text-sm text-foreground/60 group-hover:text-foreground transition-colors tracking-wide font-semibold">{label}</span>
+                </label>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -162,17 +173,19 @@ export default function CollectionsClient({ initialProducts }: { initialProducts
           <span className="text-xs tracking-[0.2em] uppercase font-bold">Gender</span>
           {expandedFilters.gender ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
-        <div className={`overflow-hidden transition-all duration-300 ${expandedFilters.gender ? 'max-h-40 mt-5' : 'max-h-0'}`}>
-          <div className="flex flex-col gap-4">
-            {['Men', 'Women', 'Unisex'].map(label => {
-              const genderValue = label === 'Men' ? 'MALE' : label === 'Women' ? 'FEMALE' : 'UNISEX';
-              return (
-                <label key={label} className="flex items-center gap-4 cursor-pointer group">
-                  <input type="checkbox" checked={genderFilters.includes(genderValue)} onChange={() => toggleArrayFilter(genderFilters, setGenderFilters, genderValue)} className="accent-[#d4af37] w-4 h-4 bg-transparent border-foreground/30 cursor-pointer" />
-                  <span className="text-sm text-foreground/60 group-hover:text-foreground transition-colors tracking-wide font-semibold">{label}</span>
-                </label>
-              );
-            })}
+        <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${expandedFilters.gender ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+          <div className="overflow-hidden">
+            <div className="flex flex-col gap-4 pt-5">
+              {['Men', 'Women', 'Unisex'].map(label => {
+                const genderValue = label === 'Men' ? 'MALE' : label === 'Women' ? 'FEMALE' : 'UNISEX';
+                return (
+                  <label key={label} className="flex items-center gap-4 cursor-pointer group">
+                    <input type="checkbox" checked={genderFilters.includes(genderValue)} onChange={() => toggleArrayFilter(genderFilters, setGenderFilters, genderValue)} className="accent-[#d4af37] w-4 h-4 bg-transparent border-foreground/30 cursor-pointer" />
+                    <span className="text-sm text-foreground/60 group-hover:text-foreground transition-colors tracking-wide font-semibold">{label}</span>
+                  </label>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
@@ -236,7 +249,7 @@ export default function CollectionsClient({ initialProducts }: { initialProducts
             {/* Desktop Sidebar */}
             {isDesktopFiltersOpen && (
               <div className="hidden lg:block w-1/4 sticky top-32">
-                <FilterSidebar />
+                {filterSidebar}
               </div>
             )}
 
@@ -251,13 +264,13 @@ export default function CollectionsClient({ initialProducts }: { initialProducts
                       <X className="w-6 h-6" />
                     </button>
                   </div>
-                  <FilterSidebar />
+                  {filterSidebar}
                 </div>
               </div>
             )}
 
             {/* Product Grid Area */}
-            <div className={`w-full ${isDesktopFiltersOpen ? 'lg:w-3/4' : 'lg:w-full'} flex flex-col transition-all duration-300`}>
+            <div className={`w-full ${isDesktopFiltersOpen ? 'lg:w-3/4' : 'lg:w-full'} flex flex-col transition-[width] duration-300`}>
               
               {/* Desktop Top Toolbar */}
               <div className="hidden lg:flex justify-between items-center mb-8 pb-4 border-b border-foreground/5 relative">

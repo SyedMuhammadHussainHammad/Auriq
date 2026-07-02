@@ -133,6 +133,9 @@ export default function AdminProducts() {
       formData.append('notes_json', JSON.stringify(notes));
       ['top_notes','heart_notes','base_notes'].forEach(k => formData.delete(k));
 
+      const catGender: Record<string, string> = { '1': 'MALE', '2': 'FEMALE', '3': 'UNISEX' };
+      formData.append('gender', catGender[formData.get('category_id') as string] || 'UNISEX');
+
       const res = await adminProductService.create(formData);
       if (res.success) {
         setIsAddProductOpen(false);
@@ -182,6 +185,9 @@ export default function AdminProducts() {
     const base = formData.get('base_notes'); if (base) notes.push({ note_type: 'BASE', note_name: base });
     formData.append('notes_json', JSON.stringify(notes));
     ['top_notes','heart_notes','base_notes'].forEach(k => formData.delete(k));
+
+    const catGender: Record<string, string> = { '1': 'MALE', '2': 'FEMALE', '3': 'UNISEX' };
+    formData.append('gender', catGender[formData.get('category_id') as string] || 'UNISEX');
 
     const res = await adminProductService.update(editingProduct.id, formData);
     if (res.success) {
@@ -477,7 +483,7 @@ export default function AdminProducts() {
 </Modal>
       <Modal isOpen={!!editingProduct} onClose={() => setEditingProduct(null)} title="Edit Product" maxWidth="max-w-2xl">
   {editingProduct && (
-    <form className="flex flex-col gap-6" onSubmit={handleEditProduct}>
+    <form key={editingProduct.id} className="flex flex-col gap-6" onSubmit={handleEditProduct}>
       {error && <div className="text-red-500 text-sm bg-red-500/10 p-3 rounded-lg text-center">{error}</div>}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
