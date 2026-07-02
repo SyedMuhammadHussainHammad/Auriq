@@ -9,7 +9,7 @@ const processQueue = () => {
 };
 
 const tryRefresh = async (): Promise<boolean> => {
-  const refreshToken = localStorage.getItem('adminRefreshToken');
+  const refreshToken = sessionStorage.getItem('adminRefreshToken');
   if (!refreshToken) return false;
 
   try {
@@ -20,7 +20,7 @@ const tryRefresh = async (): Promise<boolean> => {
     });
     const data = await res.json();
     if (data.success && data.data?.accessToken) {
-      localStorage.setItem('adminToken', data.data.accessToken);
+      sessionStorage.setItem('adminToken', data.data.accessToken);
       return true;
     }
   } catch {}
@@ -28,13 +28,13 @@ const tryRefresh = async (): Promise<boolean> => {
 };
 
 const forceLogout = () => {
-  localStorage.removeItem('adminToken');
-  localStorage.removeItem('adminRefreshToken');
+  sessionStorage.removeItem('adminToken');
+  sessionStorage.removeItem('adminRefreshToken');
   window.location.href = '/admin/login';
 };
 
 export const adminFetch = async (endpoint: string, options: RequestInit = {}, _isRetry = false): Promise<any> => {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('adminToken') : null;
+  const token = typeof window !== 'undefined' ? sessionStorage.getItem('adminToken') : null;
 
   const headers = new Headers(options.headers || {});
   if (token) headers.set('Authorization', `Bearer ${token}`);

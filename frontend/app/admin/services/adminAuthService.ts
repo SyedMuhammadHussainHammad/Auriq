@@ -9,23 +9,23 @@ export const adminAuthService = {
     });
     
     if (res.success && res.data.accessToken) {
-      localStorage.setItem('adminToken', res.data.accessToken);
+      sessionStorage.setItem('adminToken', res.data.accessToken);
       if (res.data.refreshToken) {
-        localStorage.setItem('adminRefreshToken', res.data.refreshToken);
+        sessionStorage.setItem('adminRefreshToken', res.data.refreshToken);
       }
     }
     return res;
   },
 
   logout: () => {
-    localStorage.removeItem('adminToken');
-    localStorage.removeItem('adminRefreshToken');
+    sessionStorage.removeItem('adminToken');
+    sessionStorage.removeItem('adminRefreshToken');
     window.location.href = '/admin/login';
   },
 
   getToken: () => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('adminToken');
+      return sessionStorage.getItem('adminToken');
     }
     return null;
   }
