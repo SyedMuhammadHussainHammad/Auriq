@@ -16,6 +16,8 @@ const nextConfig: NextConfig = {
         hostname: "res.cloudinary.com",
       },
     ],
+    minimumCacheTTL: 86400,
+    formats: ["image/webp"],
   },
   experimental: {
     optimizePackageImports: ['lucide-react'],

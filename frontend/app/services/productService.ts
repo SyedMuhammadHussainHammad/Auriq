@@ -1,8 +1,8 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+import { API_URL, fetchWithTimeout } from '../utils/api';
 
 export const productService = {
   async getAllProducts() {
-    const res = await fetch(`${API_URL}/products`, {
+    const res = await fetchWithTimeout(`${API_URL}/products`, {
       next: { tags: ['products'] }
     });
     if (!res.ok) throw new Error('Failed to fetch products');
@@ -10,7 +10,7 @@ export const productService = {
   },
 
   async getFeaturedProducts() {
-    const res = await fetch(`${API_URL}/products/featured`, {
+    const res = await fetchWithTimeout(`${API_URL}/products/featured`, {
       next: { tags: ['products'] }
     });
     if (!res.ok) throw new Error('Failed to fetch featured products');
@@ -18,7 +18,7 @@ export const productService = {
   },
 
   async getBestSellers() {
-    const res = await fetch(`${API_URL}/products/bestsellers`, {
+    const res = await fetchWithTimeout(`${API_URL}/products/bestsellers`, {
       next: { tags: ['products'] }
     });
     if (!res.ok) throw new Error('Failed to fetch best sellers');
@@ -26,7 +26,7 @@ export const productService = {
   },
 
   async getProductById(id: string | number) {
-    const res = await fetch(`${API_URL}/products/${id}`, {
+    const res = await fetchWithTimeout(`${API_URL}/products/${id}`, {
       next: { tags: ['products'] }
     });
     if (!res.ok) throw new Error('Failed to fetch product');

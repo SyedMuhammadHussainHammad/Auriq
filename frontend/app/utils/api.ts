@@ -1,5 +1,18 @@
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
+export async function fetchWithTimeout(url: string, options: RequestInit & { next?: any } = {}, ms = 5000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), ms);
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(id);
+    return res;
+  } catch (err) {
+    clearTimeout(id);
+    throw err;
+  }
+}
+
 export const getAuthHeaders = (): HeadersInit => {
   const token = localStorage.getItem('auriqAccessToken');
   return {
