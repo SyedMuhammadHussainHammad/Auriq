@@ -4,13 +4,14 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Search, Heart, ShoppingCart, User } from "lucide-react";
+import { Search, Heart, ShoppingCart, User, Menu, X } from "lucide-react";
 import AnnouncementBar from "./AnnouncementBar";
 import { useCart } from "../../context/CartContext";
 
 export default function Header() {
   const router = useRouter();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<any>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -97,7 +98,7 @@ export default function Header() {
       <div className="container-lux flex items-center justify-between h-20">
         {/* Left: Logo */}
         <div className="flex items-center">
-          <Link href="/#hero" onClick={handleLogoClick} className="flex items-center">
+          <Link href="/" onClick={handleLogoClick} className="flex items-center">
             <div className="relative w-14 h-14 md:w-16 md:h-16">
               <Image 
                 src="/icon.png" 
@@ -137,6 +138,15 @@ export default function Header() {
             <Link href="/collections?sort=best-sellers" className="hover:text-gold transition-colors">Best Sellers</Link>
             <Link href="/about" className="hover:text-gold transition-colors">About Us</Link>
           </div>
+
+          {/* Hamburger — mobile only */}
+          <button
+            className="lg:hidden flex items-center justify-center w-9 h-9 hover:text-gold transition-colors"
+            onClick={() => setIsMobileMenuOpen(prev => !prev)}
+            aria-label="Toggle menu"
+          >
+            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
 
           <div className="flex items-center gap-4">
             <Link href="/wishlist" aria-label="Wishlist" className="hover:text-gold transition-colors">
@@ -190,6 +200,30 @@ export default function Header() {
           </div>
         </nav>
       </div>
+      {/* Mobile Menu Drawer */}
+      {isMobileMenuOpen && (
+        <div className="lg:hidden absolute top-full left-0 w-full bg-[var(--header-bg)] backdrop-blur-md border-b border-foreground/10 z-50 flex flex-col py-4 px-6 gap-1">
+          {/* Search */}
+          <div className="relative w-full mb-3">
+            <input
+              type="text"
+              placeholder="Search fragrances..."
+              className="w-full bg-transparent border border-foreground/20 rounded-full py-2 pl-10 pr-4 focus:outline-none focus:border-gold transition-colors text-sm"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const val = (e.target as HTMLInputElement).value.trim();
+                  if (val) { setIsMobileMenuOpen(false); window.location.href = `/collections?search=${encodeURIComponent(val)}`; }
+                }
+              }}
+            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/60" />
+          </div>
+          <Link href="/collections" onClick={() => setIsMobileMenuOpen(false)} className="py-3 border-b border-foreground/10 text-sm font-semibold tracking-wide hover:text-gold transition-colors">All Collections</Link>
+          <Link href="/collections?sort=new-arrivals" onClick={() => setIsMobileMenuOpen(false)} className="py-3 border-b border-foreground/10 text-sm font-semibold tracking-wide hover:text-gold transition-colors">New Arrivals</Link>
+          <Link href="/collections?sort=best-sellers" onClick={() => setIsMobileMenuOpen(false)} className="py-3 border-b border-foreground/10 text-sm font-semibold tracking-wide hover:text-gold transition-colors">Best Sellers</Link>
+          <Link href="/about" onClick={() => setIsMobileMenuOpen(false)} className="py-3 text-sm font-semibold tracking-wide hover:text-gold transition-colors">About Us</Link>
+        </div>
+      )}
     </header>
   );
 }
