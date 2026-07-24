@@ -193,9 +193,9 @@ export default function ProductDetailsClient({ product }: { product: any }) {
             <button
               onClick={handleAddToCart}
               disabled={cartLoading || !selectedVariant}
-              className="flex-1 bg-gold/90 backdrop-blur-md text-background py-4 px-6 rounded-full font-bold tracking-widest hover:bg-foreground hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] transition-all flex items-center justify-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed text-sm"
+              className="flex-1 bg-gold/90 backdrop-blur-md text-background py-4 px-4 rounded-full font-bold tracking-widest hover:bg-foreground hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed text-sm whitespace-nowrap"
             >
-              <ShoppingBag className="w-5 h-5" />
+              <ShoppingBag className="w-4 h-4 hidden sm:block" />
               {cartLoading ? 'ADDING...' : 'ADD TO CART'}
             </button>
             <div className="flex items-center border border-foreground/20 rounded-full lux-glass-card shrink-0">
