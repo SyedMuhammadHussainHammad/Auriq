@@ -161,8 +161,11 @@ export default function AdminOrders() {
                       <td className="p-4 font-bold text-foreground">AUR-{order.id}</td>
                       <td className="p-4">
                         <div className="flex flex-col">
-                          <span className="font-semibold text-foreground tracking-wide">{order.user?.first_name} {order.user?.last_name}</span>
-                          <span className="text-xs text-foreground/50">{order.user?.email || "Guest"}</span>
+                          <span className="font-semibold text-foreground tracking-wide">
+                            {order.user ? `${order.user.first_name} ${order.user.last_name}` : (order.guest_name || order.shipping_name || "Guest")}
+                          </span>
+                          <span className="text-xs text-foreground/50">{order.user?.email || order.guest_email || "—"}</span>
+                          <span className="text-xs text-foreground/50">{order.shipping_phone || "—"}</span>
                         </div>
                       </td>
                       <td className="p-4 text-foreground/80 font-medium">{new Date(order.created_at).toLocaleDateString()}</td>
