@@ -33,10 +33,10 @@ export default function PromotionalCards({ className = "", showNoise = true, set
       {/* Noise overlay */}
       {showNoise && <div className="absolute inset-0 bg-noise opacity-30 pointer-events-none z-0"></div>}
 
-      <div className="container-lux relative z-10">
-        <div className="grid grid-cols-2 md:grid-cols-2 gap-3 md:gap-8">
+      <div className="w-full relative z-10">
+        <div className="grid grid-cols-2 gap-3 md:gap-8">
           {promos.map((ad, idx) => (
-            <Link key={idx} href={ad.link_url || "/collections"} className="group block relative aspect-[3/4] sm:aspect-[4/3] md:aspect-[16/9] lg:aspect-[2/1] rounded-xl md:rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-black/50">
+            <Link key={idx} href={ad.link_url || "/collections"} className="group block relative aspect-[4/3] md:aspect-[16/9] lg:aspect-[2/1] rounded-xl md:rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-black/50">
               <Image
                 src={ad.image_url}
                 alt={ad.title}
