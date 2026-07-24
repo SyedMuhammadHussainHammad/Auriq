@@ -139,15 +139,6 @@ export default function Header() {
             <Link href="/about" className="hover:text-gold transition-colors">About Us</Link>
           </div>
 
-          {/* Hamburger — mobile only */}
-          <button
-            className="lg:hidden flex items-center justify-center w-9 h-9 hover:text-gold transition-colors"
-            onClick={() => setIsMobileMenuOpen(prev => !prev)}
-            aria-label="Toggle menu"
-          >
-            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
-
           <div className="flex items-center gap-4">
             <Link href="/wishlist" aria-label="Wishlist" className="hover:text-gold transition-colors">
               <Heart className="w-5 h-5" />
@@ -197,6 +188,15 @@ export default function Header() {
                 </div>
               )}
             </div>
+
+            {/* Hamburger — mobile only */}
+            <button
+              className="lg:hidden hover:text-gold transition-colors"
+              onClick={() => setIsMobileMenuOpen(prev => !prev)}
+              aria-label="Toggle menu"
+            >
+              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
         </nav>
       </div>
