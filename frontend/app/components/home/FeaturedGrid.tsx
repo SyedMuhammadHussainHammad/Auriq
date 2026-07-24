@@ -31,7 +31,7 @@ export default function FeaturedGrid({ products = [] }: { products?: any[] }) {
             return (
               <div key={product.id} className="group relative flex flex-col lux-glass-card p-3 sm:p-6 active:scale-[0.98] transition-transform duration-150">
                 <div className="flex flex-col h-full">
-                  <Link href={`/products/${product.slug || product.id}`} className="block relative aspect-[4/5] overflow-hidden rounded-xl mb-3 sm:mb-6 z-10 bg-transparent shadow-2xl">
+                  <Link href={`/products/${product.id}`} className="block relative aspect-[4/5] overflow-hidden rounded-xl mb-3 sm:mb-6 z-10 bg-transparent shadow-2xl">
                     <Image
                       src={imageUrl}
                       alt={product.name}
@@ -44,7 +44,7 @@ export default function FeaturedGrid({ products = [] }: { products?: any[] }) {
 
                   <div className="flex flex-col text-center relative z-10 px-1 sm:px-4 mt-auto">
                     <span className="text-[9px] sm:text-[10px] text-gold uppercase tracking-[0.2em] mb-1 sm:mb-3 font-bold">{product.brand}</span>
-                    <Link href={`/products/${product.slug || product.id}`}>
+                    <Link href={`/products/${product.id}`}>
                       <h3 className="font-serif text-sm sm:text-xl text-foreground mb-1 sm:mb-2 font-bold drop-shadow-md hover:text-gold transition-colors line-clamp-1 leading-tight">{product.name}</h3>
                     </Link>
                     <span className="text-foreground/80 text-xs sm:text-sm tracking-wide font-medium">Rs. {parseFloat(price).toLocaleString()}</span>

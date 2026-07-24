@@ -34,7 +34,7 @@ export default function BestSellers({ products = [] }: { products?: any[] }) {
             return (
               <div key={product.id} className="group relative flex flex-col lux-glass-card p-5">
                 <div className="flex flex-col h-full">
-                  <Link href={`/products/${product.slug || product.id}`} className="block relative aspect-[4/5] overflow-hidden rounded-xl mb-6 bg-background z-10 shadow-2xl">
+                  <Link href={`/products/${product.id}`} className="block relative aspect-[4/5] overflow-hidden rounded-xl mb-6 bg-background z-10 shadow-2xl">
                     <Image
                       src={imageUrl}
                       alt={product.name}
@@ -48,7 +48,7 @@ export default function BestSellers({ products = [] }: { products?: any[] }) {
 
                   <div className="flex flex-col text-center relative z-10 px-2">
                     <span className="text-[10px] text-gold uppercase tracking-[0.2em] mb-3 font-bold">{product.brand}</span>
-                    <Link href={`/products/${product.slug || product.id}`}>
+                    <Link href={`/products/${product.id}`}>
                       <h3 className="font-serif text-xl text-foreground mb-2 font-bold drop-shadow-md hover:text-gold transition-colors">{product.name}</h3>
                     </Link>
                     <span className="text-foreground/80 text-sm tracking-wide font-medium">Rs. {parseFloat(price).toLocaleString()}</span>
