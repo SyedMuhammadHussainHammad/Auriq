@@ -128,7 +128,7 @@ export default function CheckoutPage() {
       const orderData = {
         guestInfo: isGuest ? { email, name: `${firstName} ${lastName}`.trim(), phone } : undefined,
         shippingAddress,
-        paymentMethod: paymentMethod === 'card' ? 'CARD' : 'COD',
+        paymentMethod: 'COD',
         notes: '',
         discountCode: appliedDiscount?.code || undefined
       };
