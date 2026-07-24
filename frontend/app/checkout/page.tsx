@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight, ShieldCheck, CreditCard, Truck, CheckCircle2, User, UserX } from "lucide-react";
+import { ChevronRight, ShieldCheck, Truck, CheckCircle2, User, UserX } from "lucide-react";
 import dynamic from "next/dynamic";
 import Header from "../components/layout/Header";
 const Footer = dynamic(() => import("../components/layout/Footer"), { ssr: false });
@@ -31,7 +31,7 @@ export default function CheckoutPage() {
   const [isGuest, setIsGuest] = useState(true);
   const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "cod">("cod");
+  const paymentMethod = "cod";
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [orderId, setOrderId] = useState<number | null>(null);
@@ -330,41 +330,13 @@ export default function CheckoutPage() {
                       <ShieldCheck className="w-4 h-4 text-gold" /> All transactions are secure and encrypted.
                     </p>
                     <div className="flex flex-col border border-foreground/20 rounded-lg overflow-hidden">
-
-                      {/* COD */}
-                      <label className={`flex items-center gap-4 p-4 cursor-pointer transition-colors ${paymentMethod === 'cod' ? 'bg-foreground/5' : 'hover:bg-foreground/5'}`}>
-                        <input type="radio" name="payment" value="cod" checked={paymentMethod === 'cod'} onChange={() => setPaymentMethod('cod')} className="accent-gold w-4 h-4" />
-                        <Truck className="w-5 h-5 text-foreground/70" />
+                      <div className="flex items-center gap-4 p-4 bg-foreground/5">
+                        <Truck className="w-5 h-5 text-gold" />
                         <span className="text-sm font-semibold tracking-wide text-foreground">Cash on Delivery (COD)</span>
-                      </label>
-                      {paymentMethod === 'cod' && (
-                        <div className="p-4 border-t border-foreground/10 bg-foreground/5">
-                          <p className="text-xs text-foreground/60 font-medium tracking-wide">Pay with cash upon delivery. Our rider will collect payment at your door.</p>
-                        </div>
-                      )}
-
-                      {/* Card */}
-                      <label className={`flex items-center gap-4 p-4 border-t border-foreground/20 cursor-pointer transition-colors ${paymentMethod === 'card' ? 'bg-foreground/5' : 'hover:bg-foreground/5'}`}>
-                        <input type="radio" name="payment" value="card" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} className="accent-gold w-4 h-4" />
-                        <CreditCard className="w-5 h-5 text-foreground/70" />
-                        <div className="flex items-center justify-between flex-1">
-                          <span className="text-sm font-semibold tracking-wide text-foreground">Debit / Credit Card</span>
-                          <div className="flex items-center gap-1">
-                            <span className="text-[10px] font-bold bg-blue-600 text-white px-2 py-0.5 rounded">VISA</span>
-                            <span className="text-[10px] font-bold bg-red-500 text-white px-2 py-0.5 rounded">MC</span>
-                          </div>
-                        </div>
-                      </label>
-                      {paymentMethod === 'card' && (
-                        <div className="p-4 border-t border-foreground/10 bg-foreground/5 grid grid-cols-2 gap-4">
-                          <div className="col-span-2">
-                            <input type="text" placeholder="Card Number" className="bg-transparent border border-foreground/20 rounded p-3 text-sm focus:outline-none focus:border-gold transition-colors placeholder:text-foreground/30 text-foreground font-medium tracking-wide w-full" />
-                          </div>
-                          <input type="text" placeholder="MM/YY" className="bg-transparent border border-foreground/20 rounded p-3 text-sm focus:outline-none focus:border-gold transition-colors placeholder:text-foreground/30 text-foreground font-medium tracking-wide w-full" />
-                          <input type="text" placeholder="CVC" className="bg-transparent border border-foreground/20 rounded p-3 text-sm focus:outline-none focus:border-gold transition-colors placeholder:text-foreground/30 text-foreground font-medium tracking-wide w-full" />
-                        </div>
-                      )}
-
+                      </div>
+                      <div className="p-4 border-t border-foreground/10">
+                        <p className="text-xs text-foreground/60 font-medium tracking-wide">Pay with cash upon delivery. Our rider will collect payment at your door.</p>
+                      </div>
                     </div>
                   </div>
                 </section>

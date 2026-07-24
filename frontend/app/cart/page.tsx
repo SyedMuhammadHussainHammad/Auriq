@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Trash2, ArrowLeft, ShieldCheck, CreditCard } from "lucide-react";
+import { Trash2, ArrowLeft, ShieldCheck, Truck } from "lucide-react";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import { useCart } from "../context/CartContext";
@@ -183,11 +183,9 @@ export default function CartPage() {
                     Secure Checkout
                   </Link>
 
-                  <div className="flex justify-center items-center gap-4 mt-2 opacity-50">
-                    <CreditCard className="w-8 h-8 text-foreground" />
-                    {/* Placeholder for other payment icons */}
-                    <div className="w-8 h-5 border border-foreground/30 rounded flex items-center justify-center text-[8px] font-bold text-foreground">VISA</div>
-                    <div className="w-8 h-5 border border-foreground/30 rounded flex items-center justify-center text-[8px] font-bold text-foreground">MC</div>
+                  <div className="flex justify-center items-center gap-2 mt-2 opacity-50">
+                    <Truck className="w-5 h-5 text-foreground" />
+                    <span className="text-[10px] text-foreground font-bold tracking-widest uppercase">Cash on Delivery</span>
                   </div>
                 </div>
               </div>
