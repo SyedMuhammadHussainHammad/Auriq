@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Package, ShoppingCart, Users, Settings, LogOut, Search, Bell, Store, Ticket, Activity, Star, Mail, RefreshCcw, Truck, Image, Shield, Database, PieChart, Gift, Award, FileText } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, Users, Settings, LogOut, Bell, Store, Ticket, Activity, Star, Mail, Truck, Image, Database, Award, FileText } from "lucide-react";
 import { useEffect, useState } from "react";
 import { adminAuthService } from "./services/adminAuthService";
 
@@ -59,7 +59,6 @@ export default function AdminLayout({
 
     { type: 'header', name: 'SYSTEM' },
     { type: 'link', name: "General Settings", href: "/admin/settings", icon: Settings },
-    { type: 'link', name: "Security", href: "/admin/security", icon: Shield },
     { type: 'link', name: "Backup & Export", href: "/admin/backup", icon: Database },
   ];
 

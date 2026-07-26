@@ -87,25 +87,59 @@ export default function BackupPage() {
   const exportCustomers = async () => {
     setStatus("customers", "loading");
     try {
-      const res = await adminFetch("/customers?limit=10000");
-      const customers: any[] = res.data || [];
-      const rows = customers.map(c => ({
-        name: c.name || "",
-        email: c.email || "",
-        phone: c.phone || "",
-        orders: c.total_orders || 0,
-        spent: c.total_spent || 0,
-        status: c.is_active ? "Active" : "Inactive",
-        joined: new Date(c.created_at).toLocaleDateString(),
-      }));
+      const [customersRes, ordersRes] = await Promise.all([
+        adminFetch("/customers?limit=10000"),
+        adminFetch("/orders"),
+      ]);
+
+      const rows: any[] = [];
+
+      // Registered customers
+      (customersRes.data || []).forEach((c: any) => {
+        rows.push({
+          type: "Registered",
+          name: c.name || "",
+          email: c.email || "",
+          phone: c.phone || "",
+          orders: c.total_orders || 0,
+          spent: c.total_spent || 0,
+          status: c.is_active ? "Active" : "Inactive",
+          joined: new Date(c.created_at).toLocaleDateString(),
+        });
+      });
+
+      // Guest customers — deduplicate by email, accumulate orders + spent
+      const guestMap: Record<string, any> = {};
+      (ordersRes.data || []).forEach((o: any) => {
+        if (o.user_id) return; // skip registered users
+        const email = o.guest_email || "";
+        const key = email || `guest_${o.id}`;
+        if (!guestMap[key]) {
+          guestMap[key] = {
+            type: "Guest",
+            name: o.guest_name || o.shipping_name || "Guest",
+            email,
+            phone: o.shipping_phone || o.guest_phone || "",
+            orders: 0,
+            spent: 0,
+            status: "Guest",
+            joined: new Date(o.created_at).toLocaleDateString(),
+          };
+        }
+        guestMap[key].orders += 1;
+        guestMap[key].spent += Number(o.total || 0);
+      });
+      rows.push(...Object.values(guestMap));
+
       const columns = [
+        { key: "type", label: "Type" },
         { key: "name", label: "Name" },
         { key: "email", label: "Email" },
         { key: "phone", label: "Phone" },
         { key: "orders", label: "Total Orders" },
         { key: "spent", label: "Total Spent (Rs)" },
         { key: "status", label: "Status" },
-        { key: "joined", label: "Joined" },
+        { key: "joined", label: "First Order / Joined" },
       ];
       downloadCSV(toCSV(rows, columns), `auriq-customers-${Date.now()}.csv`);
       setStatus("customers", "done");
