@@ -137,7 +137,7 @@ export default function CheckoutPage() {
       if (res.success) { setOrderId(res.data.id); setIsSuccess(true); refreshCart(); }
       else alert(res.message || "Failed to create order");
     } catch (error: any) {
-      alert(error.response?.data?.message || "Checkout failed");
+      alert(error.message || "Checkout failed");
     } finally { setIsProcessing(false); }
   };
 
@@ -267,8 +267,8 @@ export default function CheckoutPage() {
                             )}
                           </div>
                           <div className="flex flex-col gap-2 group">
-                            <label htmlFor="postalCode" className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">Postal Code</label>
-                            <input id="postalCode" type="text" required value={postalCode} onChange={(e) => setPostalCode(e.target.value)} className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground font-medium tracking-wide" />
+                            <label htmlFor="postalCode" className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">Postal Code <span className="text-foreground/30">(optional)</span></label>
+                            <input id="postalCode" type="text" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} className="bg-transparent border-b border-foreground/20 py-2 text-sm focus:outline-none focus:border-gold transition-colors text-foreground font-medium tracking-wide" />
                           </div>
                           <div className="flex flex-col gap-2 group md:col-span-2">
                             <label htmlFor="province" className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-medium group-focus-within:text-gold transition-colors">Province</label>
@@ -409,7 +409,7 @@ export default function CheckoutPage() {
                   <span className="text-xl font-semibold text-foreground tracking-wide">{formatPrice(total)}</span>
                 </div>
                 <div className="lg:hidden">
-                  <button onClick={handleCheckout} disabled={isProcessing || cartItems.length === 0} className="w-full bg-gold/90 text-background py-5 text-sm font-bold tracking-widest hover:bg-foreground hover:text-background transition-colors uppercase disabled:opacity-50 disabled:cursor-not-allowed flex justify-center">
+                  <button type="submit" disabled={isProcessing || cartItems.length === 0} className="w-full bg-gold/90 text-background py-5 text-sm font-bold tracking-widest hover:bg-foreground hover:text-background transition-colors uppercase disabled:opacity-50 disabled:cursor-not-allowed flex justify-center">
                     {isProcessing ? "Processing..." : "Complete Order"}
                   </button>
                 </div>

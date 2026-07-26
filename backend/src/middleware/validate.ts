@@ -49,7 +49,7 @@ export const createOrderSchema = z.object({
     street: z.string().min(1, 'Street is required'),
     city: z.string().min(1, 'City is required'),
     province: z.string().min(1, 'Province is required'),
-    postal_code: z.string().min(1, 'Postal code is required')
+    postal_code: z.string().optional()
   }),
   paymentMethod: z.enum(['COD', 'CARD']).optional(),
   guestInfo: z.object({
