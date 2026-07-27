@@ -44,36 +44,25 @@ export default function BackupPage() {
       const res = await adminFetch("/orders");
       const orders: any[] = res.data || [];
       const rows = orders.map(o => ({
-        id: `AUR-${o.id}`,
-        date: new Date(o.created_at).toLocaleDateString(),
-        status: o.status,
-        customer: o.user ? `${o.user.first_name} ${o.user.last_name}` : (o.guest_name || "Guest"),
-        email: o.user?.email || o.guest_email || "",
+        order_id: `AUR-${o.id}`,
+        customer_name: o.user
+          ? `${o.user.first_name || ""} ${o.user.last_name || ""}`.trim()
+          : (o.guest_name || o.shipping_name || "Guest"),
+        products: (o.items || [])
+          .map((i: any) => `${i.item_name} x${i.quantity}`)
+          .join("; "),
+        address: [o.shipping_street, o.shipping_city, o.shipping_province]
+          .filter(Boolean).join(", "),
         phone: o.shipping_phone || "",
-        city: o.shipping_city || "",
-        items: o.items?.length || 0,
-        subtotal: o.subtotal,
-        shipping: o.shipping_fee,
-        discount: o.discount_amount || 0,
-        total: o.total,
-        payment: o.payment_method,
-        notes: o.notes || "",
+        amount: `Rs. ${Number(o.total).toLocaleString()}`,
       }));
       const columns = [
-        { key: "id", label: "Order ID" },
-        { key: "date", label: "Date" },
-        { key: "status", label: "Status" },
-        { key: "customer", label: "Customer" },
-        { key: "email", label: "Email" },
+        { key: "order_id", label: "Order ID" },
+        { key: "customer_name", label: "Customer Name" },
+        { key: "products", label: "Products" },
+        { key: "address", label: "Address" },
         { key: "phone", label: "Phone" },
-        { key: "city", label: "City" },
-        { key: "items", label: "Items" },
-        { key: "subtotal", label: "Subtotal (Rs)" },
-        { key: "shipping", label: "Shipping (Rs)" },
-        { key: "discount", label: "Discount (Rs)" },
-        { key: "total", label: "Total (Rs)" },
-        { key: "payment", label: "Payment" },
-        { key: "notes", label: "Notes" },
+        { key: "amount", label: "Amount" },
       ];
       downloadCSV(toCSV(rows, columns), `auriq-orders-${Date.now()}.csv`);
       setStatus("orders", "done");
@@ -92,54 +81,55 @@ export default function BackupPage() {
         adminFetch("/orders"),
       ]);
 
+      const orders: any[] = ordersRes.data || [];
+
+      // Build map of most recent shipping address per registered user_id
+      const userAddressMap: Record<number, string> = {};
+      orders.forEach((o: any) => {
+        if (o.user_id && !userAddressMap[o.user_id]) {
+          userAddressMap[o.user_id] = [o.shipping_street, o.shipping_city, o.shipping_province]
+            .filter(Boolean).join(", ");
+        }
+      });
+
       const rows: any[] = [];
 
       // Registered customers
       (customersRes.data || []).forEach((c: any) => {
         rows.push({
-          type: "Registered",
+          customer_id: c.id,
           name: c.name || "",
           email: c.email || "",
+          address: userAddressMap[c.id] || "",
           phone: c.phone || "",
-          orders: c.total_orders || 0,
-          spent: c.total_spent || 0,
-          status: c.is_active ? "Active" : "Inactive",
-          joined: new Date(c.created_at).toLocaleDateString(),
         });
       });
 
-      // Guest customers — deduplicate by email, accumulate orders + spent
+      // Guest customers — deduplicate by email, use first order's address
       const guestMap: Record<string, any> = {};
-      (ordersRes.data || []).forEach((o: any) => {
-        if (o.user_id) return; // skip registered users
+      orders.forEach((o: any) => {
+        if (o.user_id) return;
         const email = o.guest_email || "";
         const key = email || `guest_${o.id}`;
         if (!guestMap[key]) {
           guestMap[key] = {
-            type: "Guest",
+            customer_id: "Guest",
             name: o.guest_name || o.shipping_name || "Guest",
             email,
+            address: [o.shipping_street, o.shipping_city, o.shipping_province]
+              .filter(Boolean).join(", "),
             phone: o.shipping_phone || o.guest_phone || "",
-            orders: 0,
-            spent: 0,
-            status: "Guest",
-            joined: new Date(o.created_at).toLocaleDateString(),
           };
         }
-        guestMap[key].orders += 1;
-        guestMap[key].spent += Number(o.total || 0);
       });
       rows.push(...Object.values(guestMap));
 
       const columns = [
-        { key: "type", label: "Type" },
-        { key: "name", label: "Name" },
+        { key: "customer_id", label: "Customer ID" },
+        { key: "name", label: "Customer Name" },
         { key: "email", label: "Email" },
+        { key: "address", label: "Address" },
         { key: "phone", label: "Phone" },
-        { key: "orders", label: "Total Orders" },
-        { key: "spent", label: "Total Spent (Rs)" },
-        { key: "status", label: "Status" },
-        { key: "joined", label: "First Order / Joined" },
       ];
       downloadCSV(toCSV(rows, columns), `auriq-customers-${Date.now()}.csv`);
       setStatus("customers", "done");
@@ -155,50 +145,20 @@ export default function BackupPage() {
     try {
       const res = await adminFetch("/products");
       const products: any[] = res.data || [];
-      const rows: any[] = [];
-      products.forEach(p => {
+      const rows = products.map(p => {
         const variants: any[] = p.variants || [];
-        if (variants.length === 0) {
-          rows.push({
-            id: p.id,
-            name: p.name,
-            brand: p.brand || "",
-            category: p.category?.name || "",
-            size_ml: "",
-            price: "",
-            discount_price: "",
-            stock: "",
-            sku: "",
-            status: p.is_active ? "Active" : "Inactive",
-          });
-        } else {
-          variants.forEach(v => {
-            rows.push({
-              id: p.id,
-              name: p.name,
-              brand: p.brand || "",
-              category: p.category?.name || "",
-              size_ml: v.size_ml || "",
-              price: v.price || "",
-              discount_price: v.discount_price || "",
-              stock: v.stock_quantity ?? "",
-              sku: v.sku || "",
-              status: p.is_active ? "Active" : "Inactive",
-            });
-          });
-        }
+        const prices = variants.map(v => Number(v.discount_price || v.price || 0)).filter(n => n > 0);
+        const price = prices.length > 0 ? Math.min(...prices) : 0;
+        return {
+          product_id: p.id,
+          product_name: p.name,
+          price: price > 0 ? `Rs. ${price.toLocaleString()}` : "",
+        };
       });
       const columns = [
-        { key: "id", label: "Product ID" },
-        { key: "name", label: "Name" },
-        { key: "brand", label: "Brand" },
-        { key: "category", label: "Category" },
-        { key: "size_ml", label: "Size (ml)" },
-        { key: "price", label: "Price (Rs)" },
-        { key: "discount_price", label: "Sale Price (Rs)" },
-        { key: "stock", label: "Stock" },
-        { key: "sku", label: "SKU" },
-        { key: "status", label: "Status" },
+        { key: "product_id", label: "Product ID" },
+        { key: "product_name", label: "Product Name" },
+        { key: "price", label: "Price" },
       ];
       downloadCSV(toCSV(rows, columns), `auriq-products-${Date.now()}.csv`);
       setStatus("products", "done");
@@ -212,15 +172,28 @@ export default function BackupPage() {
   const exportNewsletter = async () => {
     setStatus("newsletter", "loading");
     try {
-      const res = await adminFetch("/newsletters");
-      const subscribers: any[] = res.data || [];
-      const rows = subscribers.map(s => ({
-        email: s.email || "",
-        subscribed: new Date(s.created_at).toLocaleDateString(),
-      }));
+      const [newsletterRes, customersRes] = await Promise.all([
+        adminFetch("/newsletters?limit=10000"),
+        adminFetch("/customers?limit=10000"),
+      ]);
+      // Build email → {name, id} map from registered customers
+      const customerByEmail: Record<string, { id: number; name: string }> = {};
+      (customersRes.data || []).forEach((c: any) => {
+        if (c.email) customerByEmail[c.email.toLowerCase()] = { id: c.id, name: c.name || "" };
+      });
+
+      const rows = (newsletterRes.data || []).map((s: any) => {
+        const match = customerByEmail[s.email?.toLowerCase()] || null;
+        return {
+          email: s.email || "",
+          name: match?.name || "",
+          customer_id: match?.id ?? "",
+        };
+      });
       const columns = [
         { key: "email", label: "Email" },
-        { key: "subscribed", label: "Subscribed On" },
+        { key: "name", label: "Name" },
+        { key: "customer_id", label: "Customer ID" },
       ];
       downloadCSV(toCSV(rows, columns), `auriq-newsletter-${Date.now()}.csv`);
       setStatus("newsletter", "done");
