@@ -152,39 +152,46 @@ export default function Header() {
               )}
             </Link>
             <div className="relative" ref={dropdownRef}>
-              {isLoggedIn ? (
-                <button 
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  aria-label="Profile Menu" 
-                  className={`transition-colors flex items-center ${isDropdownOpen ? 'text-gold' : 'hover:text-gold'}`}
-                >
-                  <User className="w-5 h-5" />
-                </button>
-              ) : (
-                <Link href="/account" aria-label="Profile" className="hover:text-gold transition-colors flex items-center">
-                  <User className="w-5 h-5" />
-                </Link>
-              )}
+              <button
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                aria-label="Account Menu"
+                className={`transition-colors flex items-center ${isDropdownOpen ? 'text-gold' : 'hover:text-gold'}`}
+              >
+                <User className="w-5 h-5" />
+              </button>
 
               {/* Dropdown Menu */}
-              {isLoggedIn && isDropdownOpen && (
+              {isDropdownOpen && (
                 <div className="absolute right-0 top-full mt-6 w-56 lux-glass-card shadow-2xl p-2 flex flex-col gap-1 border border-foreground/10 animate-in fade-in slide-in-from-top-2 duration-200 text-foreground z-50">
-                  <div className="px-4 py-3 border-b border-foreground/10 mb-1">
-                    <p className="text-[10px] uppercase tracking-widest text-foreground/50 font-bold mb-1">Signed in as</p>
-                    <p className="text-sm font-semibold truncate">{user?.name || "Welcome"}</p>
-                  </div>
-                  <Link href="/account?tab=profile" onClick={() => setIsDropdownOpen(false)} className="px-4 py-2.5 text-sm hover:bg-foreground/5 hover:text-gold transition-colors text-left flex items-center gap-3 rounded">
-                    Edit Profile
-                  </Link>
-                  <Link href="/account?tab=addresses" onClick={() => setIsDropdownOpen(false)} className="px-4 py-2.5 text-sm hover:bg-foreground/5 hover:text-gold transition-colors text-left flex items-center gap-3 rounded">
-                    Addresses
-                  </Link>
-                  <Link href="/account?tab=orders" onClick={() => setIsDropdownOpen(false)} className="px-4 py-2.5 text-sm hover:bg-foreground/5 hover:text-gold transition-colors text-left flex items-center gap-3 rounded">
-                    Track Orders
-                  </Link>
-                  <button onClick={handleLogout} className="px-4 py-2.5 mt-1 border-t border-foreground/10 text-sm text-red-500 hover:bg-red-500/10 transition-colors text-left font-bold tracking-wide rounded">
-                    Sign Out
-                  </button>
+                  {isLoggedIn ? (
+                    <>
+                      <div className="px-4 py-3 border-b border-foreground/10 mb-1">
+                        <p className="text-[10px] uppercase tracking-widest text-foreground/50 font-bold mb-1">Signed in as</p>
+                        <p className="text-sm font-semibold truncate">{user?.name || "Welcome"}</p>
+                      </div>
+                      <Link href="/account?tab=profile" onClick={() => setIsDropdownOpen(false)} className="px-4 py-2.5 text-sm hover:bg-foreground/5 hover:text-gold transition-colors text-left flex items-center gap-3 rounded">
+                        Edit Profile
+                      </Link>
+                      <Link href="/account?tab=addresses" onClick={() => setIsDropdownOpen(false)} className="px-4 py-2.5 text-sm hover:bg-foreground/5 hover:text-gold transition-colors text-left flex items-center gap-3 rounded">
+                        Addresses
+                      </Link>
+                      <Link href="/account?tab=orders" onClick={() => setIsDropdownOpen(false)} className="px-4 py-2.5 text-sm hover:bg-foreground/5 hover:text-gold transition-colors text-left flex items-center gap-3 rounded">
+                        Track Orders
+                      </Link>
+                      <button onClick={handleLogout} className="px-4 py-2.5 mt-1 border-t border-foreground/10 text-sm text-red-500 hover:bg-red-500/10 transition-colors text-left font-bold tracking-wide rounded">
+                        Sign Out
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link href="/account" onClick={() => setIsDropdownOpen(false)} className="px-4 py-2.5 text-sm hover:bg-foreground/5 hover:text-gold transition-colors text-left rounded font-semibold">
+                        Sign In / Register
+                      </Link>
+                      <Link href="/track" onClick={() => setIsDropdownOpen(false)} className="px-4 py-2.5 text-sm hover:bg-foreground/5 hover:text-gold transition-colors text-left rounded">
+                        Track Order
+                      </Link>
+                    </>
+                  )}
                 </div>
               )}
             </div>
