@@ -4,12 +4,18 @@ import prisma from '../config/database'
 export const getAllProducts = async (req: Request, res: Response) => {
   try {
     const page = Math.max(1, Number(req.query.page) || 1);
-    const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
+    const limit = Math.min(500, Math.max(1, Number(req.query.limit) || 500));
+    const categorySlug = req.query.category as string | undefined;
+
+    const where: any = { is_active: true };
+    if (categorySlug) {
+      where.category = { slug: categorySlug };
+    }
 
     const [total, products] = await Promise.all([
-      prisma.product.count({ where: { is_active: true } }),
+      prisma.product.count({ where }),
       prisma.product.findMany({
-        where: { is_active: true },
+        where,
         include: {
           category: true,
           variants: true,
@@ -21,8 +27,8 @@ export const getAllProducts = async (req: Request, res: Response) => {
       })
     ]);
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       data: products,
       pagination: {
         total,

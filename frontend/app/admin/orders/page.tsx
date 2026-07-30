@@ -17,6 +17,8 @@ export default function AdminOrders() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   const filteredOrders = orders.filter(order => {
     const matchesSearch = !search || order.id.toString().includes(search) || (order.user?.name || order.user?.email || order.guest_email || "").toLowerCase().includes(search.toLowerCase());
@@ -48,10 +50,56 @@ export default function AdminOrders() {
     try {
       await adminOrderService.deleteOrder(order.id);
       setOrders(prev => prev.filter(o => o.id !== order.id));
+      setSelectedIds(prev => { const n = new Set(prev); n.delete(order.id); return n; });
       success("Order deleted successfully.");
     } catch (err) {
       toastError("Failed to delete order.");
     }
+  };
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds(prev => {
+      const n = new Set(prev);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
+  };
+
+  const allFilteredSelected = filteredOrders.length > 0 && filteredOrders.every(o => selectedIds.has(o.id));
+
+  const toggleSelectAll = () => {
+    if (allFilteredSelected) {
+      setSelectedIds(prev => {
+        const n = new Set(prev);
+        filteredOrders.forEach(o => n.delete(o.id));
+        return n;
+      });
+    } else {
+      setSelectedIds(prev => {
+        const n = new Set(prev);
+        filteredOrders.forEach(o => n.add(o.id));
+        return n;
+      });
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`Delete ${selectedIds.size} selected order(s)? This cannot be undone.`)) return;
+    setBulkDeleting(true);
+    const ids = Array.from(selectedIds);
+    let failed = 0;
+    for (const id of ids) {
+      try {
+        await adminOrderService.deleteOrder(id);
+      } catch {
+        failed++;
+      }
+    }
+    await fetchOrders();
+    setSelectedIds(new Set());
+    setBulkDeleting(false);
+    if (failed === 0) success(`${ids.length} order(s) deleted.`);
+    else toastError(`${ids.length - failed} deleted, ${failed} failed.`);
   };
 
   const handleUpdateStatus = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -103,7 +151,7 @@ export default function AdminOrders() {
           <input 
             type="text" 
             placeholder="Search by order ID or customer..." value={search} onChange={(e) => setSearch(e.target.value)} 
-            className="w-full bg-foreground/[0.02] border border-foreground/10 rounded-lg py-2 pl-10 pr-4 focus:outline-none focus:border-gold transition-colors text-sm font-medium"
+            className="w-full bg-foreground/[0.02] border border-foreground/10 rounded-lg py-2 !pl-10 pr-4 focus:outline-none focus:border-gold transition-colors text-sm font-medium"
           />
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/50" />
         </div>
@@ -121,6 +169,22 @@ export default function AdminOrders() {
         </div>
       </div>
 
+      {/* Bulk Action Bar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center justify-between bg-gold/10 border border-gold/20 rounded-xl px-5 py-3">
+          <span className="text-sm font-bold text-gold tracking-wide">{selectedIds.size} order{selectedIds.size > 1 ? 's' : ''} selected</span>
+          <div className="flex items-center gap-3">
+            <button onClick={() => setSelectedIds(new Set())} className="text-xs text-foreground/50 hover:text-foreground font-bold tracking-widest uppercase transition-colors">
+              Clear
+            </button>
+            <button onClick={handleBulkDelete} disabled={bulkDeleting} className="flex items-center gap-2 text-xs bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/20 px-4 py-2 rounded-lg font-bold tracking-widest uppercase transition-colors disabled:opacity-50">
+              <Trash2 className="w-3.5 h-3.5" />
+              {bulkDeleting ? "Deleting..." : "Delete Selected"}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Orders Table */}
       <div className="bg-background rounded-xl border border-foreground/10 shadow-sm overflow-hidden">
         <div className="overflow-x-auto min-h-[300px]">
@@ -133,7 +197,12 @@ export default function AdminOrders() {
               <thead>
                 <tr className="border-b border-foreground/10 text-[10px] uppercase tracking-widest text-foreground/50 bg-foreground/[0.02]">
                   <th className="p-4 font-bold w-12">
-                    <input type="checkbox" className="accent-gold w-4 h-4 rounded border-foreground/30" />
+                    <input
+                      type="checkbox"
+                      className="accent-gold w-4 h-4 rounded border-foreground/30"
+                      checked={allFilteredSelected}
+                      onChange={toggleSelectAll}
+                    />
                   </th>
                   <th className="p-4 font-bold">Order ID</th>
                   <th className="p-4 font-bold">Customer</th>
@@ -156,13 +225,18 @@ export default function AdminOrders() {
                   return (
                     <tr key={order.id} className="border-b border-foreground/5 hover:bg-foreground/[0.02] transition-colors text-sm group">
                       <td className="p-4">
-                        <input type="checkbox" className="accent-gold w-4 h-4 rounded border-foreground/30" />
+                        <input
+                          type="checkbox"
+                          className="accent-gold w-4 h-4 rounded border-foreground/30"
+                          checked={selectedIds.has(order.id)}
+                          onChange={() => toggleSelect(order.id)}
+                        />
                       </td>
                       <td className="p-4 font-bold text-foreground">AUR-{order.id}</td>
                       <td className="p-4">
                         <div className="flex flex-col">
                           <span className="font-semibold text-foreground tracking-wide">
-                            {order.user ? `${order.user.first_name} ${order.user.last_name}` : (order.guest_name || order.shipping_name || "Guest")}
+                            {order.user ? order.user.name : (order.guest_name || order.shipping_name || "Guest")}
                           </span>
                           <span className="text-xs text-foreground/50">{order.user?.email || order.guest_email || "—"}</span>
                           <span className="text-xs text-foreground/50">{order.shipping_phone || "—"}</span>
@@ -210,7 +284,7 @@ export default function AdminOrders() {
         
         {/* Pagination */}
         <div className="p-4 border-t border-foreground/10 flex items-center justify-between text-xs font-medium text-foreground/60">
-          <span>Showing {orders.length} orders</span>
+          <span>Showing {filteredOrders.length} of {orders.length} orders</span>
           <div className="flex items-center gap-2">
             <button className="px-3 py-1 rounded border border-foreground/10 hover:border-gold transition-colors disabled:opacity-50">Prev</button>
             <button className="px-3 py-1 rounded border border-foreground/10 bg-gold/10 text-gold transition-colors">1</button>

@@ -71,7 +71,7 @@ const CollectionProductCard = ({ product }: { product: any }) => {
   );
 };
 
-export default function CollectionsClient({ initialProducts }: { initialProducts: any[] }) {
+export default function CollectionsClient({ initialProducts, categories = [], initialCategory = "" }: { initialProducts: any[]; categories?: any[]; initialCategory?: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sortQuery = searchParams.get('sort') || 'featured';
@@ -81,13 +81,14 @@ export default function CollectionsClient({ initialProducts }: { initialProducts
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [isDesktopFiltersOpen, setIsDesktopFiltersOpen] = useState(false);
-  
+
   const [products] = useState<any[]>(initialProducts);
   const [search, setSearch] = useState(searchQuery);
   const [priceFilters, setPriceFilters] = useState<string[]>([]);
   const [familyFilters, setFamilyFilters] = useState<string[]>([]);
   const [genderFilters, setGenderFilters] = useState<string[]>([]);
   const [brandFilters, setBrandFilters] = useState<string[]>([]);
+  const [categoryFilter, setCategoryFilter] = useState<string>(initialCategory);
 
   const toggleArrayFilter = (arr: string[], setArr: (v: string[]) => void, value: string) => {
     setArr(arr.includes(value) ? arr.filter(v => v !== value) : [...arr, value]);
@@ -119,7 +120,17 @@ export default function CollectionsClient({ initialProducts }: { initialProducts
   const handleSortChange = (val: string) => {
     setSortBy(val);
     setIsSortDropdownOpen(false);
-    router.push(`/collections?sort=${val}`);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('sort', val);
+    router.push(`/collections?${params.toString()}`);
+  };
+
+  const handleCategoryChange = (slug: string) => {
+    setCategoryFilter(slug);
+    const params = new URLSearchParams(searchParams.toString());
+    if (slug) params.set('category', slug);
+    else params.delete('category');
+    router.push(`/collections?${params.toString()}`);
   };
 
   const getSortLabel = (val: string) => {
@@ -136,11 +147,17 @@ export default function CollectionsClient({ initialProducts }: { initialProducts
     const matchesSearch = !search || p.name.toLowerCase().includes(search.toLowerCase()) || (p.brand || "").toLowerCase().includes(search.toLowerCase());
     const price = Number(p.variants?.[0]?.price || 0);
     const matchesPrice = priceFilters.length === 0 || priceFilters.some(label => matchesPriceRange(price, label));
-    const matchesFamily = familyFilters.length === 0 || familyFilters.some(f => (p.fragrance_type || "").toLowerCase() === f.toLowerCase());
+    const activeTypes = familyFilters.filter(f => f !== 'BUNDLES');
+    const bundleSelected = familyFilters.includes('BUNDLES');
+    const matchesFamily = familyFilters.length === 0 || (
+      (activeTypes.length > 0 && activeTypes.some(f => (p.fragrance_type || "").toLowerCase() === f.toLowerCase())) ||
+      (bundleSelected && (p.category?.name || "").toLowerCase() === 'bundles')
+    );
     const matchesGender = genderFilters.length === 0 || genderFilters.some(g => (p.gender || "").toLowerCase() === g.toLowerCase());
     const matchesBrand = brandFilters.length === 0 || brandFilters.some(b => (p.brand || "").toLowerCase() === b.toLowerCase());
-    return matchesSearch && matchesPrice && matchesFamily && matchesGender && matchesBrand;
-  }), [products, search, priceFilters, familyFilters, genderFilters, brandFilters]);
+    const matchesCategory = !categoryFilter || (p.category?.slug || "").toLowerCase() === categoryFilter.toLowerCase();
+    return matchesSearch && matchesPrice && matchesFamily && matchesGender && matchesBrand && matchesCategory;
+  }), [products, search, priceFilters, familyFilters, genderFilters, brandFilters, categoryFilter]);
 
   const sortedProducts = useMemo(() => [...filteredProducts].sort((a, b) => {
     const priceA = Number(a.variants?.[0]?.price || 0);
@@ -177,7 +194,7 @@ export default function CollectionsClient({ initialProducts }: { initialProducts
     <div className="flex flex-col gap-6 w-full">
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-xl font-serif text-gradient-gold font-bold tracking-widest">Filters</h3>
-        <button onClick={() => { setPriceFilters([]); setGenderFilters([]); setFamilyFilters([]); }} className="text-[10px] text-foreground/50 hover:text-foreground uppercase tracking-[0.2em] transition-colors">Clear All</button>
+        <button onClick={() => { setPriceFilters([]); setGenderFilters([]); setFamilyFilters([]); setCategoryFilter(""); }} className="text-[10px] text-foreground/50 hover:text-foreground uppercase tracking-[0.2em] transition-colors">Clear All</button>
       </div>
 
       {/* Price Filter */}
@@ -215,7 +232,7 @@ export default function CollectionsClient({ initialProducts }: { initialProducts
         <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${expandedFilters.family ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
           <div className="overflow-hidden">
             <div className="flex flex-col gap-4 pt-5">
-              {[{ label: 'Perfume', value: 'PERFUME' }, { label: 'Attar', value: 'ATTAR' }].map(({ label, value }) => (
+              {[{ label: 'Perfume', value: 'PERFUME' }, { label: 'Attar', value: 'ATTAR' }, { label: 'Bundles', value: 'BUNDLES' }].map(({ label, value }) => (
                 <label key={value} className="flex items-center gap-4 cursor-pointer group">
                   <input type="checkbox" checked={familyFilters.includes(value)} onChange={() => toggleArrayFilter(familyFilters, setFamilyFilters, value)} className="accent-[#d4af37] w-4 h-4 bg-transparent border-foreground/30 cursor-pointer" />
                   <span className="text-sm text-foreground/60 group-hover:text-foreground transition-colors tracking-wide font-semibold">{label}</span>

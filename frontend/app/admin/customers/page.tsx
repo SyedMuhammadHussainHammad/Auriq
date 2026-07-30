@@ -43,7 +43,7 @@ export default function CustomersPage() {
 
       <div className="bg-background rounded-xl p-4 border border-foreground/10 shadow-sm flex gap-4 items-center">
         <div className="relative flex-1 max-w-sm">
-          <input type="text" placeholder="Search by name or email..." value={search} onChange={handleSearch} className="w-full bg-foreground/[0.02] border border-foreground/10 rounded-lg py-2 pl-10 pr-4 focus:outline-none focus:border-gold transition-colors text-sm font-medium" />
+          <input type="text" placeholder="Search by name or email..." value={search} onChange={handleSearch} className="w-full bg-foreground/[0.02] border border-foreground/10 rounded-lg py-2 !pl-10 pr-4 focus:outline-none focus:border-gold transition-colors text-sm font-medium" />
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/50" />
         </div>
         <span className="text-xs text-foreground/50 font-medium">{total} customers</span>

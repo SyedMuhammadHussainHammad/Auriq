@@ -30,7 +30,7 @@ export const createOrder = async (req: UserAuthRequest, res: Response): Promise<
         items: {
           include: {
             variant: { include: { product: true } },
-            bundle: true
+            bundle: { include: { items: { include: { variant: { include: { product: true } } } } } }
           }
         }
       }
@@ -74,8 +74,30 @@ export const createOrder = async (req: UserAuthRequest, res: Response): Promise<
             unit_price: price,
             total_price: itemTotal
           });
+        } else if (item.bundle) {
+          const price = Number(item.bundle.price);
+          const itemTotal = price * item.quantity;
+          subtotal += itemTotal;
+
+          for (const bundleItem of item.bundle.items) {
+            const needed = bundleItem.quantity * item.quantity;
+            const decremented = await tx.productVariant.updateMany({
+              where: { id: bundleItem.variant_id, stock_quantity: { gte: needed } },
+              data: { stock_quantity: { decrement: needed } }
+            });
+            if (decremented.count === 0) {
+              throw new Error(`Insufficient stock for a product in bundle "${item.bundle.name}"`);
+            }
+          }
+
+          orderItemsData.push({
+            bundle_id: item.bundle.id,
+            item_name: item.bundle.name,
+            quantity: item.quantity,
+            unit_price: price,
+            total_price: itemTotal
+          });
         }
-        // TODO: Handle bundles similarly
       }
 
       // Check and apply discount
@@ -249,7 +271,7 @@ export const getOrderById = async (req: UserAuthRequest, res: Response): Promise
 
     const order = await prisma.order.findUnique({
       where: { id: parsedId },
-      include: { 
+      include: {
         items: {
           include: {
             variant: {
@@ -260,7 +282,8 @@ export const getOrderById = async (req: UserAuthRequest, res: Response): Promise
               }
             }
           }
-        }
+        },
+        user: { select: { name: true, email: true } }
       }
     });
 

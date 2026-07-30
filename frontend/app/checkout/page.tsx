@@ -192,7 +192,7 @@ export default function CheckoutPage() {
                 </button>
               </div>
 
-              <form onSubmit={handleCheckout} className="flex flex-col gap-12">
+              <form id="checkout-form" onSubmit={handleCheckout} className="flex flex-col gap-12">
                 {isGuest ? (
                   <>
                     <section>
@@ -409,7 +409,7 @@ export default function CheckoutPage() {
                   <span className="text-xl font-semibold text-foreground tracking-wide">{formatPrice(total)}</span>
                 </div>
                 <div className="lg:hidden">
-                  <button type="submit" disabled={isProcessing || cartItems.length === 0} className="w-full bg-gold/90 text-background py-5 text-sm font-bold tracking-widest hover:bg-foreground hover:text-background transition-colors uppercase disabled:opacity-50 disabled:cursor-not-allowed flex justify-center">
+                  <button type="submit" form="checkout-form" disabled={isProcessing || cartItems.length === 0} className="w-full bg-gold/90 text-background py-5 text-sm font-bold tracking-widest hover:bg-foreground hover:text-background transition-colors uppercase disabled:opacity-50 disabled:cursor-not-allowed flex justify-center">
                     {isProcessing ? "Processing..." : "Complete Order"}
                   </button>
                 </div>

@@ -46,9 +46,46 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
       return;
     }
 
-    const order = await prisma.order.update({
+    const existingOrder = await prisma.order.findUnique({
       where: { id: parseInt(id as string) },
-      data: { status: normalizedStatus as any }
+      include: {
+        items: {
+          include: {
+            bundle: { include: { items: true } }
+          }
+        }
+      }
+    });
+
+    if (!existingOrder) {
+      res.status(404).json({ success: false, message: 'Order not found' });
+      return;
+    }
+
+    const shouldRestoreStock = normalizedStatus === 'CANCELLED' && existingOrder.status !== 'CANCELLED';
+
+    const order = await prisma.$transaction(async (tx) => {
+      if (shouldRestoreStock) {
+        for (const item of existingOrder.items) {
+          if (item.variant_id !== null) {
+            await tx.productVariant.update({
+              where: { id: item.variant_id },
+              data: { stock_quantity: { increment: item.quantity } }
+            });
+          } else if (item.bundle) {
+            for (const bundleItem of item.bundle.items) {
+              await tx.productVariant.update({
+                where: { id: bundleItem.variant_id },
+                data: { stock_quantity: { increment: bundleItem.quantity * item.quantity } }
+              });
+            }
+          }
+        }
+      }
+      return tx.order.update({
+        where: { id: parseInt(id as string) },
+        data: { status: normalizedStatus as any }
+      });
     });
 
     await logAdminAction((req as any).admin.id, 'UPDATE_ORDER_STATUS', 'Order', order.id, null, { status });
@@ -74,7 +111,13 @@ export const deleteOrder = async (req: Request, res: Response) => {
 
     const order = await prisma.order.findUnique({
       where: { id: orderId },
-      include: { items: true }
+      include: {
+        items: {
+          include: {
+            bundle: { include: { items: true } }
+          }
+        }
+      }
     });
 
     if (!order) {
@@ -84,16 +127,23 @@ export const deleteOrder = async (req: Request, res: Response) => {
 
     // Restore stock for non-cancelled/delivered orders
     if (!['CANCELLED', 'DELIVERED'].includes(order.status)) {
-      await prisma.$transaction(
-        order.items
-          .filter(item => item.variant_id !== null)
-          .map(item =>
-            prisma.productVariant.update({
-              where: { id: item.variant_id! },
+      await prisma.$transaction(async (tx) => {
+        for (const item of order.items) {
+          if (item.variant_id !== null) {
+            await tx.productVariant.update({
+              where: { id: item.variant_id },
               data: { stock_quantity: { increment: item.quantity } }
-            })
-          )
-      );
+            });
+          } else if (item.bundle) {
+            for (const bundleItem of item.bundle.items) {
+              await tx.productVariant.update({
+                where: { id: bundleItem.variant_id },
+                data: { stock_quantity: { increment: bundleItem.quantity * item.quantity } }
+              });
+            }
+          }
+        }
+      });
     }
 
     await prisma.order.delete({ where: { id: orderId } });

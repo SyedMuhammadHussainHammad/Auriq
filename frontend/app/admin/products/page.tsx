@@ -272,7 +272,7 @@ export default function AdminProducts() {
           <input 
             type="text" 
             placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} 
-            className="w-full bg-foreground/[0.02] border border-foreground/10 rounded-lg py-2 pl-10 pr-4 focus:outline-none focus:border-gold transition-colors text-sm font-medium"
+            className="w-full bg-foreground/[0.02] border border-foreground/10 rounded-lg py-2 !pl-10 pr-4 focus:outline-none focus:border-gold transition-colors text-sm font-medium"
           />
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/50" />
         </div>

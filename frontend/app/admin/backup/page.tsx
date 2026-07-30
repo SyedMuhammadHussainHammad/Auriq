@@ -46,7 +46,7 @@ export default function BackupPage() {
       const rows = orders.map(o => ({
         order_id: `AUR-${o.id}`,
         customer_name: o.user
-          ? `${o.user.first_name || ""} ${o.user.last_name || ""}`.trim()
+          ? (o.user.name || "")
           : (o.guest_name || o.shipping_name || "Guest"),
         products: (o.items || [])
           .map((i: any) => `${i.item_name} x${i.quantity}`)

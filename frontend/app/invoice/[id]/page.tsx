@@ -76,12 +76,14 @@ export default function InvoicePage() {
             <div className="mb-12">
               <h3 className="text-sm font-bold tracking-widest text-gold uppercase mb-2 print:text-black">Billed To</h3>
               <p className="text-sm text-foreground/80 tracking-wide print:text-gray-800">
-                {order.user?.first_name} {order.user?.last_name || "Guest Customer"}<br/>
-                {order.user?.email || "guest@example.com"}<br/>
-                {order.shipping_address && (
+                {order.user?.name || order.guest_name || "Guest Customer"}<br/>
+                {order.user?.email || order.guest_email || ""}<br/>
+                {(order.shipping_street || order.shipping_city) && (
                   <>
                     <span className="block mt-2">Shipping Address:</span>
-                    <span className="text-xs text-foreground/60 print:text-gray-600">{order.shipping_address}</span>
+                    <span className="text-xs text-foreground/60 print:text-gray-600">
+                      {[order.shipping_street, order.shipping_city, order.shipping_province, order.shipping_postal].filter(Boolean).join(", ")}
+                    </span>
                   </>
                 )}
               </p>
@@ -98,7 +100,7 @@ export default function InvoicePage() {
                 <div key={item.id} className="grid grid-cols-4 mb-4 text-sm font-medium tracking-wide">
                   <div className="col-span-2">{item.item_name || item.product?.name || 'Unknown Product'}</div>
                   <div className="text-center">{item.quantity}</div>
-                  <div className="text-right">Rs. {Number(item.unit_price).toLocaleString()}</div>
+                  <div className="text-right">Rs. {Number(item.total_price).toLocaleString()}</div>
                 </div>
               ))}
 
@@ -112,6 +114,16 @@ export default function InvoicePage() {
                   {Number(order.shipping_fee) === 0 ? "Free" : `Rs. ${Number(order.shipping_fee).toLocaleString()}`}
                 </div>
               </div>
+              {Number(order.discount_amount) > 0 && (
+                <div className="grid grid-cols-4 mt-2 text-sm font-medium tracking-wide">
+                  <div className="col-span-3 text-right text-foreground/60 print:text-gray-600">
+                    Discount{order.discount_code ? ` (${order.discount_code})` : ""}:
+                  </div>
+                  <div className="text-right text-green-500 print:text-green-700">
+                    -Rs. {Number(order.discount_amount).toLocaleString()}
+                  </div>
+                </div>
+              )}
               <div className="grid grid-cols-4 mt-4 text-lg font-bold tracking-widest border-t border-foreground/20 pt-4 print:border-black/20">
                 <div className="col-span-3 text-right text-gold print:text-black">Total:</div>
                 <div className="text-right">Rs. {Number(order.total).toLocaleString()}</div>

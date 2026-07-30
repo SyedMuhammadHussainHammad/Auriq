@@ -19,7 +19,7 @@ export default function Hero() {
   const bgImage = settings.HERO_BG_IMAGE || null;
 
   return (
-    <section id="hero" className="relative min-h-screen w-full flex flex-col justify-center overflow-hidden pt-10">
+    <section className="relative min-h-screen w-full flex flex-col justify-center overflow-hidden pt-10">
       {/* Background Video/Image with Overlay */}
       <div className="absolute inset-0 z-0">
         {videoUrl ? (

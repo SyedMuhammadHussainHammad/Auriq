@@ -4,10 +4,11 @@ import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { Package, ChevronRight, Download, Eye, Sparkles } from "lucide-react";
+import { Package, ChevronRight, Download, Eye, Sparkles, ShoppingBag, Check } from "lucide-react";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import { getMyOrders } from "../services/orderService";
+import { addToCart } from "../services/cartService";
 
 function OrdersContent() {
   const searchParams = useSearchParams();
@@ -15,6 +16,25 @@ function OrdersContent() {
 
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [buyingItemId, setBuyingItemId] = useState<number | null>(null);
+  const [boughtItemId, setBoughtItemId] = useState<number | null>(null);
+
+  const handleBuyAgain = async (item: any) => {
+    const variantId = item.variant_id ?? undefined;
+    const bundleId = item.bundle_id ?? undefined;
+    if (!variantId && !bundleId) return;
+    setBuyingItemId(item.id);
+    try {
+      await addToCart(variantId, bundleId, 1);
+      setBoughtItemId(item.id);
+      window.dispatchEvent(new Event('cartUpdated'));
+      setTimeout(() => setBoughtItemId(null), 2000);
+    } catch {
+      // silently ignore — item may no longer be available
+    } finally {
+      setBuyingItemId(null);
+    }
+  };
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -93,9 +113,9 @@ function OrdersContent() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3 mt-4 md:mt-0">
-                    <button className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-foreground hover:text-gold transition-colors opacity-50 cursor-not-allowed">
+                    <Link href={`/invoice/${order.id}`} className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-foreground hover:text-gold transition-colors">
                       <Eye className="w-4 h-4" /> View Details
-                    </button>
+                    </Link>
                     <span className="text-foreground/20">|</span>
                     <Link href={`/invoice/${order.id}`} className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-foreground hover:text-gold transition-colors">
                       <Download className="w-4 h-4" /> Invoice
@@ -124,26 +144,25 @@ function OrdersContent() {
                           />
                         </div>
                         <div className="flex flex-col flex-1">
-                          <Link href={`/products/${item.product?.id}`}>
-                            <span className="text-base font-bold text-foreground hover:text-gold transition-colors tracking-wide block mb-1">{item.product?.name}</span>
+                          <Link href={item.product?.id ? `/products/${item.product.id}` : "#"}>
+                            <span className="text-base font-bold text-foreground hover:text-gold transition-colors tracking-wide block mb-1">{item.product?.name || item.item_name}</span>
                           </Link>
-                          <span className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold mb-2">Rs. {Number(item.price_at_time).toLocaleString()}</span>
+                          <span className="text-[10px] uppercase tracking-[0.2em] text-foreground/50 font-bold mb-2">Rs. {Number(item.unit_price).toLocaleString()}</span>
                           <span className="text-sm text-foreground/80 font-medium">Qty: {item.quantity}</span>
                         </div>
-                        <div className="hidden md:block">
-                          <button className="bg-transparent border border-foreground/20 text-foreground py-2 px-6 text-[10px] font-bold tracking-widest hover:border-gold hover:text-gold transition-colors uppercase whitespace-nowrap opacity-50 cursor-not-allowed">
-                            Buy Again
-                          </button>
-                        </div>
+                        {item.variant_id && (
+                          <div className="hidden md:block">
+                            <button
+                              onClick={() => handleBuyAgain(item)}
+                              disabled={buyingItemId === item.id}
+                              className="flex items-center gap-2 bg-transparent border border-foreground/20 text-foreground py-2 px-6 text-[10px] font-bold tracking-widest hover:border-gold hover:text-gold transition-colors uppercase whitespace-nowrap disabled:opacity-50"
+                            >
+                              {boughtItemId === item.id ? <><Check className="w-3 h-3" /> Added</> : <><ShoppingBag className="w-3 h-3" /> Buy Again</>}
+                            </button>
+                          </div>
+                        )}
                       </div>
                     ))}
-                  </div>
-                  
-                  {/* Mobile Buy Again */}
-                  <div className="mt-6 md:hidden">
-                    <button className="w-full bg-transparent border border-foreground/20 text-foreground py-3 text-xs font-bold tracking-widest hover:border-gold hover:text-gold transition-colors uppercase opacity-50 cursor-not-allowed">
-                      Buy Again
-                    </button>
                   </div>
 
                 </div>

@@ -63,6 +63,9 @@ function AccountContent() {
   const [user, setUser] = useState<any>(null);
   const [addresses, setAddresses] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
+  const [trackInput, setTrackInput] = useState("");
+  const [trackResult, setTrackResult] = useState<any>(null);
+  const [trackNotFound, setTrackNotFound] = useState(false);
   const [profileName, setProfileName] = useState("");
   const [profilePhone, setProfilePhone] = useState("");
   
@@ -769,15 +772,57 @@ function AccountContent() {
             <div className="flex flex-col gap-2 relative z-10">
               <h2 className="text-2xl font-serif text-foreground mb-6 font-bold">Track Your Order</h2>
               
-              <form className="flex flex-col md:flex-row gap-4 mb-8" onSubmit={(e) => { e.preventDefault(); alert('Tracking information will be connected to the backend soon!'); }}>
+              <form className="flex flex-col md:flex-row gap-4 mb-8" onSubmit={(e) => {
+                e.preventDefault();
+                const raw = trackInput.trim().replace(/^AUR-/i, "");
+                const id = parseInt(raw, 10);
+                const found = orders.find(o => o.id === id);
+                setTrackResult(found || null);
+                setTrackNotFound(!found);
+              }}>
                 <div className="flex-1 relative group">
                   <Package className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/30 group-focus-within:text-gold transition-colors" />
-                  <input type="text" placeholder="Enter your Order ID (e.g. AQ-8932)" required className="w-full bg-transparent border-b border-foreground/20 py-3 !pl-12 pr-4 text-sm focus:outline-none focus:border-gold transition-colors text-foreground font-medium tracking-wide" />
+                  <input
+                    type="text"
+                    value={trackInput}
+                    onChange={(e) => { setTrackInput(e.target.value); setTrackResult(null); setTrackNotFound(false); }}
+                    placeholder="Enter your Order ID (e.g. AUR-8932)"
+                    required
+                    className="w-full bg-transparent border-b border-foreground/20 py-3 !pl-12 pr-4 text-sm focus:outline-none focus:border-gold transition-colors text-foreground font-medium tracking-wide"
+                  />
                 </div>
                 <button type="submit" className="bg-gold text-background px-8 py-3 text-xs font-bold tracking-[0.2em] uppercase hover:bg-foreground transition-colors shrink-0">
                   Track
                 </button>
               </form>
+
+              {trackNotFound && (
+                <div className="mb-6 p-4 border border-red-500/20 bg-red-500/5 text-red-400 text-sm font-medium tracking-wide">
+                  No order found with that ID. Please check the number and try again.
+                </div>
+              )}
+
+              {trackResult && (
+                <div className="mb-6 border border-gold/30 bg-gold/5 p-6">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                    <div>
+                      <p className="text-sm font-bold tracking-widest text-gold">Order #AUR-{trackResult.id}</p>
+                      <p className="text-xs text-foreground/60 mt-1">Placed {new Date(trackResult.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <span className={`self-start px-3 py-1 rounded text-[10px] font-bold uppercase tracking-widest border ${trackResult.status === 'DELIVERED' ? 'bg-green-500/10 text-green-500 border-green-500/20' : trackResult.status === 'CANCELLED' ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-gold/10 text-gold border-gold/20'}`}>
+                      {trackResult.status}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-1 text-sm text-foreground/70 mb-4">
+                    {trackResult.items?.map((item: any) => (
+                      <p key={item.id}>{item.item_name} × {item.quantity}</p>
+                    ))}
+                  </div>
+                  <Link href={`/invoice/${trackResult.id}`} className="text-gold text-xs font-bold tracking-widest uppercase hover:underline">
+                    View Full Invoice →
+                  </Link>
+                </div>
+              )}
 
               <div className="border-t border-foreground/10 pt-8">
                 <h3 className="text-[10px] font-bold tracking-[0.2em] uppercase text-foreground/50 mb-6">Recent Orders</h3>
