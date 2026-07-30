@@ -8,7 +8,8 @@ export const metadata: Metadata = {
   description: "Explore our complete portfolio of luxury fragrances. Each scent is a masterpiece, crafted with the finest ingredients to evoke profound emotions.",
 };
 
-export default async function CollectionsPage({ searchParams }: { searchParams: { category?: string; sort?: string; search?: string } }) {
+export default async function CollectionsPage({ searchParams }: { searchParams: Promise<{ category?: string; sort?: string; search?: string }> }) {
+  const params = await searchParams;
   let products: any[] = [];
   let categories: any[] = [];
 
@@ -34,7 +35,7 @@ export default async function CollectionsPage({ searchParams }: { searchParams: 
       <CollectionsClient
         initialProducts={products}
         categories={categories}
-        initialCategory={searchParams.category || ""}
+        initialCategory={params.category || ""}
       />
     </Suspense>
   );
