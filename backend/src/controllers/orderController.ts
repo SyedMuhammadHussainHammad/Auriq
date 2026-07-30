@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { sendNewOrderAdminNotification } from '../services/emailService';
 import { ENV } from '../config/env';
 import prisma from '../config/database';
@@ -254,6 +254,54 @@ export const getMyOrders = async (req: UserAuthRequest, res: Response): Promise<
     res.json({ success: true, data: mappedOrders });
   } catch (error) {
     console.error('Error fetching orders:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+export const trackOrder = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id, email } = req.query;
+
+    if (!id || !email) {
+      res.status(400).json({ success: false, message: 'Order ID and email are required' });
+      return;
+    }
+
+    const parsedId = parseInt(id as string, 10);
+    if (isNaN(parsedId)) {
+      res.status(400).json({ success: false, message: 'Invalid order ID' });
+      return;
+    }
+
+    const order = await prisma.order.findUnique({
+      where: { id: parsedId },
+      include: {
+        items: {
+          include: {
+            variant: { include: { product: { include: { images: true } } } }
+          }
+        },
+        user: { select: { email: true, name: true } }
+      }
+    });
+
+    const inputEmail = (email as string).toLowerCase().trim();
+    const orderEmail = (order?.guest_email || order?.user?.email || '').toLowerCase();
+
+    if (!order || orderEmail !== inputEmail) {
+      res.status(404).json({ success: false, message: 'No order found with that ID and email combination.' });
+      return;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        ...order,
+        items: order.items.map(item => ({ ...item, product: item.variant?.product }))
+      }
+    });
+  } catch (error) {
+    console.error('TRACK ORDER ERROR:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };

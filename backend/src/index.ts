@@ -33,6 +33,13 @@ const strictEmailLimiter = rateLimit({
   message: { success: false, message: 'Too many requests. Please try again later.' }
 })
 
+// Order tracking — generous for real customers, tight enough to block enumeration attacks
+const trackLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  message: { success: false, message: 'Too many tracking attempts, please try again later.' }
+})
+
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
@@ -96,6 +103,7 @@ app.use('/api/ads', adRoutes)
 app.use('/api/user', userRoutes)
 app.use('/api/wishlist', wishlistRoutes)
 app.use('/api/cart', cartRoutes)
+app.use('/api/orders/track', trackLimiter)
 app.use('/api/orders', generalLimiter, orderRoutes)
 app.use('/api/reviews', reviewRoutes)
 app.use('/api/story', storyRoutes)

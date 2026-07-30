@@ -40,6 +40,12 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
     const { id } = req.params;
     const { status } = req.body;
 
+    const orderId = parseInt(id as string, 10);
+    if (isNaN(orderId)) {
+      res.status(400).json({ success: false, message: 'Invalid order ID' });
+      return;
+    }
+
     const normalizedStatus = (status || '').toUpperCase();
     if (!VALID_ORDER_STATUSES.includes(normalizedStatus)) {
       res.status(400).json({ success: false, message: `Invalid status. Must be one of: ${VALID_ORDER_STATUSES.join(', ')}` });
@@ -47,7 +53,7 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
     }
 
     const existingOrder = await prisma.order.findUnique({
-      where: { id: parseInt(id as string) },
+      where: { id: orderId },
       include: {
         items: {
           include: {
@@ -83,7 +89,7 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
         }
       }
       return tx.order.update({
-        where: { id: parseInt(id as string) },
+        where: { id: orderId },
         data: { status: normalizedStatus as any }
       });
     });
