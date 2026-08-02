@@ -175,6 +175,9 @@ export default function Header() {
                       <Link href="/account?tab=addresses" onClick={() => setIsDropdownOpen(false)} className="px-4 py-2.5 text-sm hover:bg-foreground/5 hover:text-gold transition-colors text-left flex items-center gap-3 rounded">
                         Addresses
                       </Link>
+                      <Link href="/orders" onClick={() => setIsDropdownOpen(false)} className="px-4 py-2.5 text-sm hover:bg-foreground/5 hover:text-gold transition-colors text-left flex items-center gap-3 rounded">
+                        Order History
+                      </Link>
                       <Link href="/account?tab=orders" onClick={() => setIsDropdownOpen(false)} className="px-4 py-2.5 text-sm hover:bg-foreground/5 hover:text-gold transition-colors text-left flex items-center gap-3 rounded">
                         Track Orders
                       </Link>
