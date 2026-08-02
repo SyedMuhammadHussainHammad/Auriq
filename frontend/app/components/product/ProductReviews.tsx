@@ -4,6 +4,25 @@ import { useState, useEffect } from "react";
 import { Star } from "lucide-react";
 import { reviewService } from "../../services/reviewService";
 
+const StarDisplay = ({ rating, size = "w-5 h-5" }: { rating: number; size?: string }) => (
+  <div className="flex">
+    {[1, 2, 3, 4, 5].map((star) => {
+      const full = star <= Math.floor(rating);
+      const half = !full && star === Math.ceil(rating) && rating % 1 >= 0.25;
+      return (
+        <span key={star} className="relative inline-flex">
+          <Star className={`${size} text-foreground/20`} />
+          {(full || half) && (
+            <span className={`absolute inset-0 overflow-hidden ${half ? "w-[50%]" : "w-full"}`}>
+              <Star className={`${size} text-gold fill-gold`} />
+            </span>
+          )}
+        </span>
+      );
+    })}
+  </div>
+);
+
 interface Review {
   id: number;
   rating: number;
@@ -77,14 +96,7 @@ export default function ProductReviews({ productId }: { productId: number }) {
         <h2 className="text-3xl font-serif text-foreground font-bold tracking-wide mb-2">Customer Reviews</h2>
 
         <div className="flex items-center gap-3 mb-10">
-          <div className="flex">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <Star
-                key={star}
-                className={`w-5 h-5 ${star <= Math.round(averageRating) ? "text-gold fill-gold" : "text-foreground/20"}`}
-              />
-            ))}
-          </div>
+          <StarDisplay rating={averageRating} />
           <span className="text-foreground/70 text-sm">
             {averageRating > 0 ? averageRating.toFixed(1) : "No ratings yet"} ({totalReviews} {totalReviews === 1 ? "review" : "reviews"})
           </span>
@@ -151,15 +163,13 @@ export default function ProductReviews({ productId }: { productId: number }) {
                   <span className="font-serif text-foreground font-semibold">{r.user?.name || "Anonymous"}</span>
                   <span className="text-xs text-foreground/40">{new Date(r.created_at).toLocaleDateString()}</span>
                 </div>
-                <div className="flex mb-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      className={`w-4 h-4 ${star <= r.rating ? "text-gold fill-gold" : "text-foreground/20"}`}
-                    />
-                  ))}
+                <div className="mb-2">
+                  <StarDisplay rating={r.rating} size="w-4 h-4" />
                 </div>
-                {r.comment && <p className="text-foreground/70 text-sm leading-relaxed">{r.comment}</p>}
+                {r.comment
+                  ? <p className="text-foreground/70 text-sm leading-relaxed">{r.comment}</p>
+                  : <p className="text-foreground/30 text-xs italic">No written review</p>
+                }
               </div>
             ))}
           </div>
